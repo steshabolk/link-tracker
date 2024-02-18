@@ -4,8 +4,8 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import edu.java.bot.enums.CommandType;
 import edu.java.bot.enums.Emoji;
-import edu.java.bot.sender.BotSender;
 import edu.java.bot.service.ScrapperService;
+import edu.java.bot.util.BotSendMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +13,8 @@ import org.springframework.stereotype.Component;
 public class StartCommand implements Command {
 
     private final CommandType commandType = CommandType.START;
-    private final BotSender sender;
     private final ScrapperService scrapperService;
-    private final String reply = String.format(
+    private static final String REPLY = String.format(
         "*hi!* %s\nthis is a link tracking bot %s\n%s",
         Emoji.WAVE.getMarkdown(),
         Emoji.ROBOT.getMarkdown(),
@@ -23,8 +22,7 @@ public class StartCommand implements Command {
     );
 
     @Autowired
-    public StartCommand(BotSender sender, ScrapperService scrapperService) {
-        this.sender = sender;
+    public StartCommand(ScrapperService scrapperService) {
         this.scrapperService = scrapperService;
     }
 
@@ -37,6 +35,6 @@ public class StartCommand implements Command {
     public SendMessage handle(Update update) {
         Long chatId = update.message().chat().id();
         scrapperService.register(chatId, update.message().from().id());
-        return sender.getSendMessage(chatId, reply);
+        return BotSendMessage.getSendMessage(chatId, REPLY);
     }
 }

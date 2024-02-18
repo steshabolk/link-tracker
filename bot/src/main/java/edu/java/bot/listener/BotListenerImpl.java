@@ -6,10 +6,10 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import edu.java.bot.enums.CommandType;
-import edu.java.bot.handler.MessageHandlerImpl;
+import edu.java.bot.handler.MessageHandler;
 import jakarta.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,16 +20,15 @@ public class BotListenerImpl implements BotListener {
 
     private final TelegramBot bot;
     private final SetMyCommands menu;
-    private final MessageHandlerImpl messageHandler;
+    private final MessageHandler messageHandler;
 
     @Autowired
-    public BotListenerImpl(TelegramBot bot, MessageHandlerImpl messageHandler) {
+    public BotListenerImpl(TelegramBot bot, MessageHandler messageHandler) {
         this.bot = bot;
         this.messageHandler = messageHandler;
-        menu = new SetMyCommands(
-            Stream.of(CommandType.START, CommandType.TRACK, CommandType.UNTRACK, CommandType.LIST, CommandType.HELP)
-                .map(cmd -> new BotCommand(cmd.getCommand(), cmd.getDescription()))
-                .toArray(BotCommand[]::new));
+        menu = new SetMyCommands(Arrays.stream(CommandType.values())
+            .map(cmd -> new BotCommand(cmd.getCommand(), cmd.getDescription()))
+            .toArray(BotCommand[]::new));
     }
 
     @PostConstruct

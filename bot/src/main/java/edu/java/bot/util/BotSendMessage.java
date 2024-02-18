@@ -1,19 +1,19 @@
-package edu.java.bot.sender;
+package edu.java.bot.util;
 
 import com.pengrad.telegrambot.model.request.ForceReply;
 import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
 
-@Component
-public class BotSender {
+@UtilityClass
+public class BotSendMessage {
 
-    public SendMessage getSendMessage(Long chatId, String text) {
+    public static SendMessage getSendMessage(Long chatId, String text) {
         return getSendMessage(chatId, text, false);
     }
 
-    public SendMessage getSendMessage(Long chatId, String text, boolean withReply) {
+    public static SendMessage getSendMessage(Long chatId, String text, boolean withReply) {
         SendMessage message = new SendMessage(chatId, EmojiParser.parseToUnicode(text))
             .parseMode(ParseMode.Markdown);
         if (withReply) {

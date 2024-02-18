@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
-import edu.java.bot.sender.BotSender;
 import edu.java.bot.service.ScrapperService;
 import java.util.Map;
 import org.junit.jupiter.api.Nested;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -25,8 +23,6 @@ class StartCommandTest {
 
     @InjectMocks
     private StartCommand startCommand;
-    @Spy
-    private BotSender sender;
     @Mock
     private ScrapperService scrapperService;
     @Mock

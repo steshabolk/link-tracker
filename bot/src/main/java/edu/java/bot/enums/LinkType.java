@@ -1,17 +1,15 @@
 package edu.java.bot.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum LinkType {
     GITHUB("github.com"),
     STACKOVERFLOW("stackoverflow.com");
+
     private final String domain;
-
-    LinkType(String domain) {
-        this.domain = domain;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
 
     public String getCommandBulletPoint() {
         return String.format("◉ %s", this.getDomain());

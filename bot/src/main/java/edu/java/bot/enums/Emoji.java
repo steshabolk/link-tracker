@@ -1,5 +1,10 @@
 package edu.java.bot.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
 public enum Emoji {
 
     WAVE(":wave:"),
@@ -11,12 +16,4 @@ public enum Emoji {
     CHECK(":heavy_check_mark:");
 
     private final String markdown;
-
-    Emoji(String markdown) {
-        this.markdown = markdown;
-    }
-
-    public String getMarkdown() {
-        return markdown;
-    }
 }

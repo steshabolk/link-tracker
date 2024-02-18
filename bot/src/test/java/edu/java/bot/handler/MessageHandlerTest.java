@@ -5,7 +5,6 @@ import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
-import edu.java.bot.sender.BotSender;
 import edu.java.bot.telegram.command.Command;
 import edu.java.bot.telegram.command.HelpCommand;
 import edu.java.bot.telegram.command.ListCommand;
@@ -19,7 +18,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -28,11 +26,9 @@ import static org.mockito.Mockito.doReturn;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class MessageHandlerImplTest {
+class MessageHandlerTest {
 
-    private MessageHandlerImpl messageHandler;
-    @Spy
-    private BotSender sender;
+    private MessageHandler messageHandler;
     @Mock
     private HelpCommand helpCommand;
     @Mock
@@ -55,28 +51,11 @@ class MessageHandlerImplTest {
     @BeforeEach
     void init() {
         List<Command> commands = List.of(helpCommand, listCommand, startCommand, trackCommand, untrackCommand);
-        messageHandler = new MessageHandlerImpl(commands, sender);
+        messageHandler = new MessageHandler(commands);
         doReturn(false).when(helpCommand).isTriggered(update);
         doReturn(false).when(listCommand).isTriggered(update);
         doReturn(false).when(trackCommand).isTriggered(update);
         doReturn(false).when(untrackCommand).isTriggered(update);
-    }
-
-    @Nested
-    class CommandsTest {
-
-        @Test
-        void testCommands() {
-            assertThat(messageHandler.commands())
-                .hasSize(5)
-                .hasExactlyElementsOfTypes(
-                    HelpCommand.class,
-                    ListCommand.class,
-                    StartCommand.class,
-                    TrackCommand.class,
-                    UntrackCommand.class
-                );
-        }
     }
 
     @Nested

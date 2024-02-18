@@ -7,7 +7,6 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
 import edu.java.bot.enums.LinkType;
-import edu.java.bot.sender.BotSender;
 import edu.java.bot.service.ScrapperService;
 import java.net.URI;
 import java.util.LinkedHashMap;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
@@ -28,8 +26,6 @@ class ListCommandTest {
 
     @InjectMocks
     private ListCommand listCommand;
-    @Spy
-    private BotSender sender;
     @Mock
     private ScrapperService scrapperService;
     @Mock
