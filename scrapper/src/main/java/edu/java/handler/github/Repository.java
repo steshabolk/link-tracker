@@ -2,7 +2,6 @@ package edu.java.handler.github;
 
 import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
-import edu.java.handler.LinkSourceClientExceptionHandler;
 import edu.java.service.BotService;
 import edu.java.service.GithubService;
 import edu.java.service.LinkService;
@@ -22,19 +21,12 @@ public class Repository extends AbstractGithubSource {
     private final GithubService githubService;
     private final BotService botService;
     private final LinkService linkService;
-    private final LinkSourceClientExceptionHandler clientExceptionHandler;
 
-    public Repository(
-        GithubService githubService,
-        BotService botService,
-        LinkService linkService,
-        LinkSourceClientExceptionHandler clientExceptionHandler
-    ) {
-        super(githubService, botService, linkService, clientExceptionHandler);
+    public Repository(GithubService githubService, BotService botService, LinkService linkService) {
+        super(githubService, botService, linkService);
         this.githubService = githubService;
         this.botService = botService;
         this.linkService = linkService;
-        this.clientExceptionHandler = clientExceptionHandler;
     }
 
     @Override
@@ -47,18 +39,12 @@ public class Repository extends AbstractGithubSource {
         MatchResult matcher = linkMatcher(link);
         RepositoryDto repository = new RepositoryDto(matcher.group("owner"), matcher.group("repo"));
         OffsetDateTime checkedAt = OffsetDateTime.now();
-        String response;
-        try {
-            Optional<String> commits = githubService.getRepoCommitsResponse(repository, link.getCheckedAt());
-            Optional<String> issues = githubService.getIssuesAndPullsResponse(repository, link.getCheckedAt());
-            response = Stream.of(commits, issues)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.joining("\n\n"));
-        } catch (RuntimeException ex) {
-            clientExceptionHandler.processClientException(ex, link);
-            return;
-        }
+        Optional<String> commits = githubService.getRepoCommitsResponse(repository, link.getCheckedAt());
+        Optional<String> issues = githubService.getIssuesAndPullsResponse(repository, link.getCheckedAt());
+        String response = Stream.of(commits, issues)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.joining("\n\n"));
         if (!response.isEmpty()) {
             botService.sendLinkUpdate(link, response);
         }

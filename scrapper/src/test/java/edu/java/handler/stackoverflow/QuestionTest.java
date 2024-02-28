@@ -2,7 +2,6 @@ package edu.java.handler.stackoverflow;
 
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
-import edu.java.handler.LinkSourceClientExceptionHandler;
 import edu.java.service.BotService;
 import edu.java.service.LinkService;
 import edu.java.service.StackoverflowService;
@@ -19,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -37,8 +37,6 @@ class QuestionTest {
     private BotService botService;
     @Mock
     private LinkService linkService;
-    @Mock
-    private LinkSourceClientExceptionHandler clientExceptionHandler;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
         LocalDate.of(2024, 1, 1),
@@ -143,11 +141,10 @@ class QuestionTest {
                 .when(stackoverflowService)
                 .getQuestionResponse(anyString(), any(Link.class));
 
-            question.checkLinkUpdate(LINK);
+            assertThatThrownBy(() -> question.checkLinkUpdate(LINK)).isInstanceOf(RuntimeException.class);
 
             verify(stackoverflowService).getQuestionResponse("24840667", LINK);
             verify(stackoverflowService, never()).getQuestionAnswersResponse(anyString(), any(OffsetDateTime.class));
-            verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }

@@ -3,7 +3,6 @@ package edu.java.handler.github;
 import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
-import edu.java.handler.LinkSourceClientExceptionHandler;
 import edu.java.service.BotService;
 import edu.java.service.GithubService;
 import edu.java.service.LinkService;
@@ -20,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -38,8 +38,6 @@ class IssueTest {
     private BotService botService;
     @Mock
     private LinkService linkService;
-    @Mock
-    private LinkSourceClientExceptionHandler clientExceptionHandler;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
         LocalDate.of(2024, 1, 1),
@@ -142,10 +140,9 @@ class IssueTest {
                 .when(githubService)
                 .getIssueResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            issue.checkLinkUpdate(LINK);
+            assertThatThrownBy(() -> issue.checkLinkUpdate(LINK)).isInstanceOf(RuntimeException.class);
 
             verify(githubService).getIssueResponse(REPOSITORY, "1", CHECKED_AT);
-            verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }
