@@ -1,20 +1,45 @@
 package edu.java.client;
 
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import edu.java.dto.github.CommitDto;
+import edu.java.dto.github.IssueDto;
+import java.time.OffsetDateTime;
+import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-@Component
-public class GithubClient extends AbstractClient {
+@HttpExchange(accept = MediaType.APPLICATION_JSON_VALUE)
+public interface GithubClient {
 
-    public GithubClient(@Qualifier("githubWebClient") WebClient webClient) {
-        super(webClient);
-    }
+    @GetExchange("/repos/{owner}/{repo}/commits")
+    List<CommitDto> getRepoCommits(
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @RequestParam("since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since
+    );
 
-    public <T> Optional<T> doGet(String url, Map<String, String> params, ParameterizedTypeReference<T> responseType) {
-        return get(url, params, responseType);
-    }
+    @GetExchange("/repos/{owner}/{repo}/commits")
+    List<CommitDto> getBranchCommits(
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @RequestParam("sha") String branch,
+        @RequestParam("since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since
+    );
+
+    @GetExchange("/repos/{owner}/{repo}/issues?state=all")
+    List<IssueDto> getIssuesAndPulls(
+        @PathVariable String owner,
+        @PathVariable String repo,
+        @RequestParam("since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since
+    );
+
+    @GetExchange("/repos/{owner}/{repo}/issues/{num}")
+    IssueDto getIssue(@PathVariable String owner, @PathVariable String repo, @PathVariable String num);
+
+    @GetExchange("/repos/{owner}/{repo}/pulls/{num}")
+    IssueDto getPullRequest(@PathVariable String owner, @PathVariable String repo, @PathVariable String num);
+
 }

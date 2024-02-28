@@ -1,20 +1,18 @@
 package edu.java.client;
 
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import edu.java.dto.stackoverflow.QuestionAnswerDto;
+import edu.java.dto.stackoverflow.QuestionDto;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-@Component
-public class StackoverflowClient extends AbstractClient {
+@HttpExchange(accept = MediaType.APPLICATION_JSON_VALUE)
+public interface StackoverflowClient {
 
-    public StackoverflowClient(@Qualifier("stackoverflowWebClient") WebClient webClient) {
-        super(webClient);
-    }
+    @GetExchange("/questions/{id}?site=stackoverflow")
+    QuestionDto getQuestion(@PathVariable String id);
 
-    public <T> Optional<T> doGet(String url, Map<String, String> params, ParameterizedTypeReference<T> responseType) {
-        return get(url, params, responseType);
-    }
+    @GetExchange("/questions/{id}/answers?site=stackoverflow")
+    QuestionAnswerDto getQuestionAnswers(@PathVariable String id);
 }

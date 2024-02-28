@@ -11,20 +11,15 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -54,72 +49,43 @@ class StackoverflowServiceTest {
     @Nested
     class QuestionResponseTest {
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-            ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-
-            String expectedUrl = "/questions/24840667";
-            Map<String, String> expectedParams = Map.of("site", "stackoverflow");
             String expectedResponse = "◉ question [title] was updated";
 
             QuestionDto question = new QuestionDto(List.of(new QuestionDto.Question(CHECKED_AT.plusDays(1), "title")));
-            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doReturn(question).when(stackoverflowClient).getQuestion("24840667");
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
-            assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
-            assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
             assertThat(actualResponse.get()).isEqualTo(expectedResponse);
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnEmptyResponseWhenThereAreNoUpdates() {
-            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-            ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-
-            String expectedUrl = "/questions/24840667";
-            Map<String, String> expectedParams = Map.of("site", "stackoverflow");
-
             QuestionDto question = new QuestionDto(List.of(new QuestionDto.Question(CHECKED_AT.minusDays(1), "title")));
-            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doReturn(question).when(stackoverflowClient).getQuestion("24840667");
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
-            assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
-            assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnEmptyResponseWhenClientResponseIsEmpty() {
-            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-            ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-
-            String expectedUrl = "/questions/24840667";
-            Map<String, String> expectedParams = Map.of("site", "stackoverflow");
-
             QuestionDto question = new QuestionDto(List.of());
-            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doReturn(question).when(stackoverflowClient).getQuestion("24840667");
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             verify(linkService).updateLinkStatus(LINK, LinkStatus.BROKEN);
-            assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
-            assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
         }
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doThrow(new RuntimeException("client error")).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(stackoverflowClient).getQuestion("24840667");
 
             assertThatThrownBy(() -> stackoverflowService.getQuestionResponse("24840667", LINK))
                 .isInstanceOf(RuntimeException.class)
@@ -130,54 +96,34 @@ class StackoverflowServiceTest {
     @Nested
     class QuestionAnswersResponseTest {
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-            ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-
-            String expectedUrl = "/questions/24840667/answers";
-            Map<String, String> expectedParams = Map.of("site", "stackoverflow");
             String expectedResponse = "➜ https://stackoverflow.com/a/1";
 
             QuestionAnswerDto answer = new QuestionAnswerDto(List.of(
                 new QuestionAnswerDto.Answer(CHECKED_AT.plusDays(1), "1", "24840667"),
                 new QuestionAnswerDto.Answer(CHECKED_AT.minusDays(1), "2", "24840667")
             ));
-            doReturn(Optional.of(answer)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doReturn(answer).when(stackoverflowClient).getQuestionAnswers("24840667");
 
             Optional<String> actualResponse = stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT);
 
-            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
-            assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
-            assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
             assertThat(actualResponse.get()).isEqualTo(expectedResponse);
         }
 
-        @SuppressWarnings("unchecked")
         @Test
         void shouldReturnEmptyResponseWhenThereAreNoUpdates() {
-            ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-            ArgumentCaptor<Map<String, String>> paramsCaptor = ArgumentCaptor.forClass(Map.class);
-
-            String expectedUrl = "/questions/24840667/answers";
-            Map<String, String> expectedParams = Map.of("site", "stackoverflow");
-
-            doReturn(Optional.of(new QuestionAnswerDto(List.of()))).when(stackoverflowClient)
-                .doGet(anyString(), anyMap(), any());
+            doReturn(new QuestionAnswerDto(List.of())).when(stackoverflowClient).getQuestionAnswers("24840667");
 
             Optional<String> actualResponse = stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT);
 
-            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
-            assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
-            assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
         }
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doThrow(new RuntimeException("client error")).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(stackoverflowClient).getQuestionAnswers("24840667");
 
             assertThatThrownBy(() -> stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)

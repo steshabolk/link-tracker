@@ -10,8 +10,6 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,10 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -43,19 +42,16 @@ class StackoverflowClientTest {
 
     private static final String API_QUESTION = "/questions/.*?.*";
     private static final String API_QUESTION_ANSWERS = "/questions/.*/answers?.*";
-    private static final String API_400 = "/err400";
-    private static final Map<String, String> SITE_PARAM = Map.of("site", "stackoverflow");
-    private static final ParameterizedTypeReference<QuestionDto> QUESTION_RESPONSE =
-        new ParameterizedTypeReference<>() {
-        };
-    private static final ParameterizedTypeReference<QuestionAnswerDto> QUESTION_ANSWERS_RESPONSE =
-        new ParameterizedTypeReference<>() {
-        };
 
     @BeforeEach
     void init() {
-        WebClient webClient = WebClient.builder().baseUrl(wireMockExtension.baseUrl()).build();
-        stackoverflowClient = new StackoverflowClient(webClient);
+        stackoverflowClient = HttpServiceProxyFactory
+            .builderFor(
+                WebClientAdapter.create(
+                    WebClient.builder().baseUrl(wireMockExtension.baseUrl()).build()
+                ))
+            .build()
+            .createClient(StackoverflowClient.class);
     }
 
     @Nested
@@ -80,12 +76,9 @@ class StackoverflowClientTest {
                         .withBody(response)
                     )
             );
-            String url = "/questions/24840667";
 
-            Optional<QuestionDto> optionalRes = stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_RESPONSE);
+            QuestionDto questionRes = stackoverflowClient.getQuestion("24840667");
 
-            assertThat(optionalRes).isPresent();
-            QuestionDto questionRes = optionalRes.get();
             assertThat(questionRes.questions().size()).isEqualTo(1);
             QuestionDto.Question question = questionRes.questions().get(0);
             assertThat(question.title()).isEqualTo("What is the regex to extract all the emojis from a string?");
@@ -107,13 +100,9 @@ class StackoverflowClientTest {
                         .withBody(response)
                     )
             );
-            String url = "/questions/24840667/answers";
 
-            Optional<QuestionAnswerDto> optionalRes =
-                stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_ANSWERS_RESPONSE);
+            QuestionAnswerDto answersRes = stackoverflowClient.getQuestionAnswers("24840667");
 
-            assertThat(optionalRes).isPresent();
-            QuestionAnswerDto answersRes = optionalRes.get();
             assertThat(answersRes.answers().size()).isEqualTo(4);
             List<String> answersIds = answersRes.answers().stream()
                 .map(QuestionAnswerDto.Answer::id)
@@ -125,7 +114,7 @@ class StackoverflowClientTest {
         @Test
         void response400Test() {
             wireMockExtension.stubFor(
-                get(urlMatching(API_400))
+                get(urlMatching(API_QUESTION))
                     .willReturn(aResponse()
                         .withStatus(400)
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
@@ -138,10 +127,9 @@ class StackoverflowClientTest {
                             """)
                     )
             );
-            String url = "/err400";
 
             WebClientResponseException ex = catchThrowableOfType(
-                () -> stackoverflowClient.doGet(url, null, QUESTION_RESPONSE),
+                () -> stackoverflowClient.getQuestion("24840667"),
                 WebClientResponseException.class
             );
             assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

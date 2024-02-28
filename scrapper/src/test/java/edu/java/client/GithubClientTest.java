@@ -10,8 +10,6 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -19,10 +17,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.reactive.function.client.support.WebClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -42,21 +41,23 @@ class GithubClientTest {
         .build();
 
     private static final String API_COMMITS = "/repos/.*/.*/commits.*";
-    private static final String API_ISSUE = "/repos/.*/.*/issues/.*";
+    private static final String API_ISSUE = "/repos/.*/.*/issues.*";
     private static final String API_PR = "/repos/.*/.*/pulls/.*";
-    private static final String API_404 = "/err404";
-    private static final Map<String, String> SINCE_PARAM = Map.of("since", "2024-01-01T00:00:00Z");
-    private static final ParameterizedTypeReference<List<CommitDto>> COMMITS_RESPONSE =
-        new ParameterizedTypeReference<>() {
-        };
-    private static final ParameterizedTypeReference<IssueDto> ISSUE_RESPONSE =
-        new ParameterizedTypeReference<>() {
-        };
+    private static final OffsetDateTime SINCE = OffsetDateTime.of(
+        LocalDate.of(2024, 1, 1),
+        LocalTime.of(0, 0, 0),
+        ZoneOffset.UTC
+    );
 
     @BeforeEach
     void init() {
-        WebClient webClient = WebClient.builder().baseUrl(wireMockExtension.baseUrl()).build();
-        githubClient = new GithubClient(webClient);
+        githubClient = HttpServiceProxyFactory
+            .builderFor(
+                WebClientAdapter.create(
+                    WebClient.builder().baseUrl(wireMockExtension.baseUrl()).build()
+                ))
+            .build()
+            .createClient(GithubClient.class);
     }
 
     @Nested
@@ -64,7 +65,7 @@ class GithubClientTest {
 
         @SneakyThrows
         @Test
-        void getCommitsTest() {
+        void getRepoCommitsTest() {
             String response = new String(Files.readAllBytes(
                 Paths.get(ClassLoader.getSystemResource("github/commits_response.json").toURI())
             ));
@@ -76,12 +77,9 @@ class GithubClientTest {
                         .withBody(response)
                     )
             );
-            String url = "/repos/golang/go/commits";
 
-            Optional<List<CommitDto>> optionalRes = githubClient.doGet(url, SINCE_PARAM, COMMITS_RESPONSE);
+            List<CommitDto> commits = githubClient.getRepoCommits("golang", "go", SINCE);
 
-            assertThat(optionalRes).isPresent();
-            List<CommitDto> commits = optionalRes.get();
             assertThat(commits.size()).isEqualTo(2);
             CommitDto commit1 = commits.get(0);
             assertThat(commit1.commit().message()).startsWith("go/doc: fix typo in comment");
@@ -91,6 +89,61 @@ class GithubClientTest {
             assertThat(commit2.commit().message()).startsWith("cmd: remove support for GOROOT_FINAL");
             assertThat(commit2.htmlUrl()).isEqualTo(
                 "https://github.com/golang/go/commit/507d1b22f4b58ac68841582d0c2c0ab6b20e5a98");
+        }
+
+        @SneakyThrows
+        @Test
+        void getBranchCommitsTest() {
+            String response = new String(Files.readAllBytes(
+                Paths.get(ClassLoader.getSystemResource("github/commits_response.json").toURI())
+            ));
+            wireMockExtension.stubFor(
+                get(urlMatching(API_COMMITS))
+                    .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                        .withBody(response)
+                    )
+            );
+
+            List<CommitDto> commits = githubClient.getBranchCommits("golang", "go", "branch-name", SINCE);
+
+            assertThat(commits.size()).isEqualTo(2);
+            CommitDto commit1 = commits.get(0);
+            assertThat(commit1.commit().message()).startsWith("go/doc: fix typo in comment");
+            assertThat(commit1.htmlUrl()).isEqualTo(
+                "https://github.com/golang/go/commit/5d4e8f5162c97d9a51abbe55d0042fea9c6be3a0");
+            CommitDto commit2 = commits.get(1);
+            assertThat(commit2.commit().message()).startsWith("cmd: remove support for GOROOT_FINAL");
+            assertThat(commit2.htmlUrl()).isEqualTo(
+                "https://github.com/golang/go/commit/507d1b22f4b58ac68841582d0c2c0ab6b20e5a98");
+        }
+
+        @SneakyThrows
+        @Test
+        void getIssuesAndPullsTest() {
+            String response = new String(Files.readAllBytes(
+                Paths.get(ClassLoader.getSystemResource("github/issues_pulls_response.json").toURI())
+            ));
+            wireMockExtension.stubFor(
+                get(urlMatching(API_ISSUE))
+                    .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                        .withBody(response)
+                    )
+            );
+
+            List<IssueDto> issues = githubClient.getIssuesAndPulls("golang", "go", SINCE);
+
+            assertThat(issues.size()).isEqualTo(2);
+            IssueDto issue1 = issues.get(0);
+            assertThat(issue1.title()).isEqualTo("internal/abi: fix typo in comment");
+            assertThat(issue1.htmlUrl()).isEqualTo("https://github.com/golang/go/pull/65981");
+            IssueDto issue2 = issues.get(1);
+            assertThat(issue2.title()).isEqualTo(
+                "proposal: x/tools/cmd/callgraph: Add caller/callee definition locations to the edge output");
+            assertThat(issue2.htmlUrl()).isEqualTo("https://github.com/golang/go/issues/65980");
         }
 
         @SneakyThrows
@@ -112,12 +165,9 @@ class GithubClientTest {
                         .withBody(response)
                     )
             );
-            String url = "/repos/golang/go/issues/65864";
 
-            Optional<IssueDto> optionalRes = githubClient.doGet(url, null, ISSUE_RESPONSE);
+            IssueDto issue = githubClient.getIssue("golang", "go", "65864");
 
-            assertThat(optionalRes).isPresent();
-            IssueDto issue = optionalRes.get();
             assertThat(issue.title()).isEqualTo("Potential Memory Leak in Runtime with Goroutines not being Freed");
             assertThat(issue.htmlUrl()).isEqualTo("https://github.com/golang/go/issues/65864");
             assertThat(issue.updatedAt()).isEqualTo(expectedUpdatedAt);
@@ -142,12 +192,9 @@ class GithubClientTest {
                         .withBody(response)
                     )
             );
-            String url = "/repos/golang/go/pulls/65840";
 
-            Optional<IssueDto> optionalRes = githubClient.doGet(url, null, ISSUE_RESPONSE);
+            IssueDto pr = githubClient.getPullRequest("golang", "go", "65840");
 
-            assertThat(optionalRes).isPresent();
-            IssueDto pr = optionalRes.get();
             assertThat(pr.title()).isEqualTo("cmd/compile: use quotes to wrap user-supplied token");
             assertThat(pr.htmlUrl()).isEqualTo("https://github.com/golang/go/pull/65840");
             assertThat(pr.updatedAt()).isEqualTo(expectedUpdatedAt);
@@ -157,7 +204,7 @@ class GithubClientTest {
         @Test
         void response404Test() {
             wireMockExtension.stubFor(
-                get(urlMatching(API_404))
+                get(urlMatching(API_COMMITS))
                     .willReturn(aResponse()
                         .withStatus(404)
                         .withHeader(CONTENT_TYPE, APPLICATION_JSON_VALUE)
@@ -169,10 +216,9 @@ class GithubClientTest {
                             """)
                     )
             );
-            String url = "/err404";
 
             WebClientResponseException ex = catchThrowableOfType(
-                () -> githubClient.doGet(url, null, COMMITS_RESPONSE),
+                () -> githubClient.getRepoCommits("golang", "go", SINCE),
                 WebClientResponseException.class
             );
             assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
