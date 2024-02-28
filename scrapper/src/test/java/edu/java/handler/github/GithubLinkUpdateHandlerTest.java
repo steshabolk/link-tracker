@@ -13,26 +13,38 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class GithubLinkUpdateHandlerTest {
 
     private GithubLinkUpdateHandler githubLinkUpdateHandler;
     @Mock
-    private Branch branch;
+    private RepositoryBranch repositoryBranch;
     @Mock
     private Issue issue;
     @Mock
-    private Branch pullRequest;
+    private RepositoryBranch pullRequest;
     @Mock
-    private Branch repository;
+    private RepositoryBranch repository;
 
     @BeforeEach
     void init() {
-        List<GithubSource> githubSources = List.of(branch, issue, pullRequest, repository);
+        doReturn("https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/tree/(?<branch>[\\w-\\./]+)")
+            .when(repositoryBranch).urlPattern();
+        doReturn("https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)")
+            .when(repository).urlPattern();
+        doReturn("https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/issues/(?<num>\\d+)")
+            .when(issue).urlPattern();
+        doReturn("https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/pull/(?<num>\\d+)")
+            .when(pullRequest).urlPattern();
+        List<GithubSource> githubSources = List.of(repositoryBranch, issue, pullRequest, repository);
         githubLinkUpdateHandler = new GithubLinkUpdateHandler(githubSources);
     }
 
@@ -43,7 +55,7 @@ class GithubLinkUpdateHandlerTest {
         void linkTypeTest() {
             LinkType expected = LinkType.GITHUB;
 
-            LinkType actual = githubLinkUpdateHandler.linkType();
+            LinkType actual = githubLinkUpdateHandler.getLinkType();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -53,7 +65,7 @@ class GithubLinkUpdateHandlerTest {
     class UpdateLinkTest {
 
         @Test
-        void updateLinkTest() {
+        void shouldUpdateLinkWhenPatternMatches() {
             OffsetDateTime checkedAt = OffsetDateTime.of(
                 LocalDate.of(2024, 1, 1),
                 LocalTime.of(0, 0, 0),
@@ -68,10 +80,32 @@ class GithubLinkUpdateHandlerTest {
 
             githubLinkUpdateHandler.updateLink(link);
 
-            verify(branch).processLinkChain(link);
-            verify(issue, never()).processLinkChain(link);
-            verify(pullRequest, never()).processLinkChain(link);
-            verify(repository, never()).processLinkChain(link);
+            verify(repository).checkLinkUpdate(link);
+            verify(repositoryBranch, never()).checkLinkUpdate(link);
+            verify(issue, never()).checkLinkUpdate(link);
+            verify(pullRequest, never()).checkLinkUpdate(link);
+        }
+
+        @Test
+        void shouldNotInvokeUpdateWhenPatternDoesNotMatch() {
+            OffsetDateTime checkedAt = OffsetDateTime.of(
+                LocalDate.of(2024, 1, 1),
+                LocalTime.of(0, 0, 0),
+                ZoneOffset.UTC
+            );
+            Link link = Link.builder()
+                .id(1L)
+                .linkType(LinkType.GITHUB)
+                .url("https://github.com/JetBrains/kotlin/stargazers")
+                .checkedAt(checkedAt)
+                .build();
+
+            githubLinkUpdateHandler.updateLink(link);
+
+            verify(repository, never()).checkLinkUpdate(link);
+            verify(repositoryBranch, never()).checkLinkUpdate(link);
+            verify(issue, never()).checkLinkUpdate(link);
+            verify(pullRequest, never()).checkLinkUpdate(link);
         }
     }
 }

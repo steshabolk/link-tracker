@@ -1,5 +1,6 @@
 package edu.java.handler.github;
 
+import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
 import edu.java.handler.LinkSourceClientExceptionHandler;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -46,21 +46,35 @@ class IssueTest {
         LocalTime.of(0, 0, 0),
         ZoneOffset.UTC
     );
-    Link LINK = Link.builder()
+    private static final Link LINK = Link.builder()
         .id(1L)
         .linkType(LinkType.GITHUB)
         .url("https://github.com/JetBrains/kotlin/issues/1")
         .checkedAt(CHECKED_AT)
         .build();
+    private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
     @Nested
-    class UrlPrefixTest {
+    class UrlDomainTest {
 
         @Test
-        void urlPrefixTest() {
-            String expected = "https://github.com";
+        void urlDomainTest() {
+            String expected = "github.com";
 
-            String actual = issue.urlPrefix();
+            String actual = issue.urlDomain();
+
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    class UrlPathTest {
+
+        @Test
+        void urlPathTest() {
+            String expected = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/issues/(?<num>\\d+)";
+
+            String actual = issue.urlPath();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -100,11 +114,11 @@ class IssueTest {
         void shouldSendUpdateWhenThereAreUpdates() {
             doReturn(Optional.of("new issues"))
                 .when(githubService)
-                .getIssueResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getIssueResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             issue.checkLinkUpdate(LINK);
 
-            verify(githubService).getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getIssueResponse(REPOSITORY, "1", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService).sendLinkUpdate(LINK, "new issues");
         }
@@ -113,11 +127,11 @@ class IssueTest {
         void shouldNotSendUpdateWhenThereAreNoUpdates() {
             doReturn(Optional.empty())
                 .when(githubService)
-                .getIssueResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getIssueResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             issue.checkLinkUpdate(LINK);
 
-            verify(githubService).getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getIssueResponse(REPOSITORY, "1", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }
@@ -126,47 +140,14 @@ class IssueTest {
         void shouldNotUpdateCheckAtWhenExceptionWasThrown() {
             doThrow(RuntimeException.class)
                 .when(githubService)
-                .getIssueResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getIssueResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             issue.checkLinkUpdate(LINK);
 
-            verify(githubService).getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getIssueResponse(REPOSITORY, "1", CHECKED_AT);
             verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-    }
-
-    @Nested
-    class LinkChainTest {
-
-        @Test
-        void shouldInvokeUpdateCheckingWhenLinkMatches() {
-            issue.processLinkChain(LINK);
-
-            verify(githubService).getIssueResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
-        }
-
-        @Test
-        void shouldInvokeNotNullNextChainElementWhenLinkDoesNotMatch() {
-            Link link = Link.builder()
-                .id(1L)
-                .linkType(LinkType.GITHUB)
-                .url("https://github.com/JetBrains/kotlin")
-                .checkedAt(CHECKED_AT)
-                .build();
-            Repository repo = mock(Repository.class);
-            issue.setNext(repo);
-
-            issue.processLinkChain(link);
-
-            verify(githubService, never()).getIssueResponse(
-                anyString(),
-                anyString(),
-                anyString(),
-                any(OffsetDateTime.class)
-            );
-            verify(repo).processLinkChain(link);
         }
     }
 }

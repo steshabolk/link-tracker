@@ -42,9 +42,9 @@ class LinkUpdaterServiceTest {
     @BeforeEach
     void init() {
         List<LinkUpdateHandler> linkUpdateHandlers = List.of(githubLinkUpdateHandler, stackoverflowLinkUpdateHandler);
-        linkUpdaterService = new LinkUpdaterService(linkUpdateHandlers, linkService);
-        doReturn(LinkType.GITHUB).when(githubLinkUpdateHandler).linkType();
-        doReturn(LinkType.STACKOVERFLOW).when(stackoverflowLinkUpdateHandler).linkType();
+        linkUpdaterService = new LinkUpdaterService(linkService, linkUpdateHandlers);
+        doReturn(LinkType.GITHUB).when(githubLinkUpdateHandler).getLinkType();
+        doReturn(LinkType.STACKOVERFLOW).when(stackoverflowLinkUpdateHandler).getLinkType();
     }
 
     @Nested

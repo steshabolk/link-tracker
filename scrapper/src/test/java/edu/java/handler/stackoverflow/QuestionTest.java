@@ -53,13 +53,26 @@ class QuestionTest {
         .build();
 
     @Nested
-    class UrlPrefixTest {
+    class UrlDomainTest {
 
         @Test
-        void urlPrefixTest() {
-            String expected = "https://stackoverflow.com";
+        void urlDomainTest() {
+            String expected = "stackoverflow.com";
 
-            String actual = question.urlPrefix();
+            String actual = question.urlDomain();
+
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    class UrlPathTest {
+
+        @Test
+        void urlPathTest() {
+            String expected = "/questions/(?<id>[\\d]+)";
+
+            String actual = question.urlPath();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -137,31 +150,6 @@ class QuestionTest {
             verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-    }
-
-    @Nested
-    class LinkChainTest {
-
-        @Test
-        void shouldInvokeUpdateCheckingWhenLinkMatches() {
-            question.processLinkChain(LINK);
-
-            verify(stackoverflowService).getQuestionResponse(anyString(), any(Link.class));
-        }
-
-        @Test
-        void shouldInvokeNotNullNextChainElementWhenLinkDoesNotMatch() {
-            Link link = Link.builder()
-                .id(1L)
-                .linkType(LinkType.STACKOVERFLOW)
-                .url("https://stackoverflow.com/a/32872406")
-                .checkedAt(CHECKED_AT)
-                .build();
-
-            question.processLinkChain(link);
-
-            verify(stackoverflowService, never()).getQuestionResponse(anyString(), any(Link.class));
         }
     }
 }

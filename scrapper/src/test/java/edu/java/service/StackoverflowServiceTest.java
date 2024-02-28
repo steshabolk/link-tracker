@@ -6,14 +6,6 @@ import edu.java.dto.stackoverflow.QuestionDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -21,12 +13,20 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,11 +65,11 @@ class StackoverflowServiceTest {
             String expectedResponse = "◉ question [title] was updated";
 
             QuestionDto question = new QuestionDto(List.of(new QuestionDto.Question(CHECKED_AT.plusDays(1), "title")));
-            doReturn(Mono.just(question)).when(stackoverflowClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
@@ -86,11 +86,11 @@ class StackoverflowServiceTest {
             Map<String, String> expectedParams = Map.of("site", "stackoverflow");
 
             QuestionDto question = new QuestionDto(List.of(new QuestionDto.Question(CHECKED_AT.minusDays(1), "title")));
-            doReturn(Mono.just(question)).when(stackoverflowClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
@@ -106,11 +106,11 @@ class StackoverflowServiceTest {
             Map<String, String> expectedParams = Map.of("site", "stackoverflow");
 
             QuestionDto question = new QuestionDto(List.of());
-            doReturn(Mono.just(question)).when(stackoverflowClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(question)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse = stackoverflowService.getQuestionResponse("24840667", LINK);
 
-            verify(stackoverflowClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             verify(linkService).updateLinkStatus(LINK, LinkStatus.BROKEN);
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
@@ -119,8 +119,7 @@ class StackoverflowServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(stackoverflowClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             assertThatThrownBy(() -> stackoverflowService.getQuestionResponse("24840667", LINK))
                 .isInstanceOf(RuntimeException.class)
@@ -145,11 +144,11 @@ class StackoverflowServiceTest {
                 new QuestionAnswerDto.Answer(CHECKED_AT.plusDays(1), "1", "24840667"),
                 new QuestionAnswerDto.Answer(CHECKED_AT.minusDays(1), "2", "24840667")
             ));
-            doReturn(Mono.just(answer)).when(stackoverflowClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(answer)).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse = stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT);
 
-            verify(stackoverflowClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
@@ -165,12 +164,12 @@ class StackoverflowServiceTest {
             String expectedUrl = "/questions/24840667/answers";
             Map<String, String> expectedParams = Map.of("site", "stackoverflow");
 
-            doReturn(Mono.just(new QuestionAnswerDto(List.of()))).when(stackoverflowClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(new QuestionAnswerDto(List.of()))).when(stackoverflowClient)
+                .doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse = stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT);
 
-            verify(stackoverflowClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(stackoverflowClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
@@ -178,8 +177,7 @@ class StackoverflowServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(stackoverflowClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(stackoverflowClient).doGet(anyString(), anyMap(), any());
 
             assertThatThrownBy(() -> stackoverflowService.getQuestionAnswersResponse("24840667", CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)

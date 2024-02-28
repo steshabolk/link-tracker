@@ -1,5 +1,6 @@
 package edu.java.handler.github;
 
+import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
 import edu.java.handler.LinkSourceClientExceptionHandler;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -52,15 +52,29 @@ class PullRequestTest {
         .url("https://github.com/JetBrains/kotlin/pull/1")
         .checkedAt(CHECKED_AT)
         .build();
+    private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
     @Nested
-    class UrlPrefixTest {
+    class UrlDomainTest {
 
         @Test
-        void urlPrefixTest() {
-            String expected = "https://github.com";
+        void urlDomainTest() {
+            String expected = "github.com";
 
-            String actual = pullRequest.urlPrefix();
+            String actual = pullRequest.urlDomain();
+
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    class UrlPathTest {
+
+        @Test
+        void urlPathTest() {
+            String expected = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/pull/(?<num>\\d+)";
+
+            String actual = pullRequest.urlPath();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -100,11 +114,11 @@ class PullRequestTest {
         void shouldSendUpdateWhenThereAreUpdates() {
             doReturn(Optional.of("new PR"))
                 .when(githubService)
-                .getPullRequestResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             pullRequest.checkLinkUpdate(LINK);
 
-            verify(githubService).getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService).sendLinkUpdate(LINK, "new PR");
         }
@@ -113,11 +127,11 @@ class PullRequestTest {
         void shouldNotSendUpdateWhenThereAreNoUpdates() {
             doReturn(Optional.empty())
                 .when(githubService)
-                .getPullRequestResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             pullRequest.checkLinkUpdate(LINK);
 
-            verify(githubService).getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }
@@ -126,52 +140,14 @@ class PullRequestTest {
         void shouldNotUpdateCheckAtWhenExceptionWasThrown() {
             doThrow(RuntimeException.class)
                 .when(githubService)
-                .getPullRequestResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
             pullRequest.checkLinkUpdate(LINK);
 
-            verify(githubService).getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
             verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-    }
-
-    @Nested
-    class LinkChainTest {
-
-        @Test
-        void shouldInvokeUpdateCheckingWhenLinkMatches() {
-            pullRequest.processLinkChain(LINK);
-
-            verify(githubService).getPullRequestResponse(
-                anyString(),
-                anyString(),
-                anyString(),
-                any(OffsetDateTime.class)
-            );
-        }
-
-        @Test
-        void shouldInvokeNotNullNextChainElementWhenLinkDoesNotMatch() {
-            Link link = Link.builder()
-                .id(1L)
-                .linkType(LinkType.GITHUB)
-                .url("https://github.com/JetBrains/kotlin")
-                .checkedAt(CHECKED_AT)
-                .build();
-            Repository repo = mock(Repository.class);
-            pullRequest.setNext(repo);
-
-            pullRequest.processLinkChain(link);
-
-            verify(githubService, never()).getPullRequestResponse(
-                anyString(),
-                anyString(),
-                anyString(),
-                any(OffsetDateTime.class)
-            );
-            verify(repo).processLinkChain(link);
         }
     }
 }

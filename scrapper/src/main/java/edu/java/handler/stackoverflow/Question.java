@@ -10,37 +10,23 @@ import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+@RequiredArgsConstructor
 @Component
-public class Question extends AbstractStackoverflowSource {
+public class Question implements StackoverflowSource {
 
     private static final String URL_PATH = "/questions/(?<id>[\\d]+)";
-    private static String urlPattern;
     private final StackoverflowService stackoverflowService;
     private final BotService botService;
     private final LinkService linkService;
     private final LinkSourceClientExceptionHandler clientExceptionHandler;
 
-    @Autowired
-    public Question(
-        StackoverflowService stackoverflowService,
-        BotService botService,
-        LinkService linkService,
-        LinkSourceClientExceptionHandler clientExceptionHandler
-    ) {
-        this.stackoverflowService = stackoverflowService;
-        this.botService = botService;
-        this.linkService = linkService;
-        this.clientExceptionHandler = clientExceptionHandler;
-        urlPattern = urlPrefix() + URL_PATH;
-    }
-
     @Override
-    public String urlPattern() {
-        return urlPattern;
+    public String urlPath() {
+        return URL_PATH;
     }
 
     @Override

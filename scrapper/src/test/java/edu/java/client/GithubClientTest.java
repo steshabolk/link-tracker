@@ -3,7 +3,6 @@ package edu.java.client;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import edu.java.dto.github.CommitDto;
 import edu.java.dto.github.IssueDto;
-import edu.java.exception.LinkSourceException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -12,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -20,13 +20,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -58,7 +60,7 @@ class GithubClientTest {
     }
 
     @Nested
-    class LinkUpdatesTest {
+    class GetRequestTest {
 
         @SneakyThrows
         @Test
@@ -76,9 +78,10 @@ class GithubClientTest {
             );
             String url = "/repos/golang/go/commits";
 
-            List<CommitDto> commits = githubClient.getLinkUpdates(url, SINCE_PARAM, COMMITS_RESPONSE).block();
+            Optional<List<CommitDto>> optionalRes = githubClient.doGet(url, SINCE_PARAM, COMMITS_RESPONSE);
 
-            assertThat(commits).isNotNull();
+            assertThat(optionalRes).isPresent();
+            List<CommitDto> commits = optionalRes.get();
             assertThat(commits.size()).isEqualTo(2);
             CommitDto commit1 = commits.get(0);
             assertThat(commit1.commit().message()).startsWith("go/doc: fix typo in comment");
@@ -111,9 +114,10 @@ class GithubClientTest {
             );
             String url = "/repos/golang/go/issues/65864";
 
-            IssueDto issue = githubClient.getLinkUpdates(url, null, ISSUE_RESPONSE).block();
+            Optional<IssueDto> optionalRes = githubClient.doGet(url, null, ISSUE_RESPONSE);
 
-            assertThat(issue).isNotNull();
+            assertThat(optionalRes).isPresent();
+            IssueDto issue = optionalRes.get();
             assertThat(issue.title()).isEqualTo("Potential Memory Leak in Runtime with Goroutines not being Freed");
             assertThat(issue.htmlUrl()).isEqualTo("https://github.com/golang/go/issues/65864");
             assertThat(issue.updatedAt()).isEqualTo(expectedUpdatedAt);
@@ -140,9 +144,10 @@ class GithubClientTest {
             );
             String url = "/repos/golang/go/pulls/65840";
 
-            IssueDto pr = githubClient.getLinkUpdates(url, null, ISSUE_RESPONSE).block();
+            Optional<IssueDto> optionalRes = githubClient.doGet(url, null, ISSUE_RESPONSE);
 
-            assertThat(pr).isNotNull();
+            assertThat(optionalRes).isPresent();
+            IssueDto pr = optionalRes.get();
             assertThat(pr.title()).isEqualTo("cmd/compile: use quotes to wrap user-supplied token");
             assertThat(pr.htmlUrl()).isEqualTo("https://github.com/golang/go/pull/65840");
             assertThat(pr.updatedAt()).isEqualTo(expectedUpdatedAt);
@@ -166,9 +171,11 @@ class GithubClientTest {
             );
             String url = "/err404";
 
-            assertThatThrownBy(() -> githubClient.getLinkUpdates(url, null, COMMITS_RESPONSE).block())
-                .isInstanceOf(LinkSourceException.class)
-                .hasMessageContaining("\"message\": \"Not Found\"");
+            WebClientResponseException ex = catchThrowableOfType(
+                () -> githubClient.doGet(url, null, COMMITS_RESPONSE),
+                WebClientResponseException.class
+            );
+            assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         }
     }
 }

@@ -1,25 +1,22 @@
 package edu.java.scheduler;
 
 import edu.java.service.LinkUpdaterService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component
-@ConditionalOnProperty(name = {"app.scheduler.enable"}, havingValue = "true")
+@ConditionalOnProperty(name = {"app.link-updater-scheduler.enable"}, havingValue = "true")
 public class LinkUpdaterScheduler {
 
     private final LinkUpdaterService linkUpdaterService;
 
-    @Autowired
-    public LinkUpdaterScheduler(LinkUpdaterService linkUpdaterService) {
-        this.linkUpdaterService = linkUpdaterService;
-    }
-
-    @Scheduled(initialDelayString = "#{linkUpdateForceDelay}", fixedDelayString = "#{linkUpdateInterval}")
+    @Scheduled(initialDelayString = "${app.link-updater-scheduler.force-check-delay}",
+               fixedDelayString = "${app.link-updater-scheduler.interval}")
     public void update() {
         log.debug("the link update task has been started");
         linkUpdaterService.updateLinks();

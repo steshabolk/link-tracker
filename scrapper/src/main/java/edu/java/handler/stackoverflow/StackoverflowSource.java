@@ -1,12 +1,12 @@
 package edu.java.handler.stackoverflow;
 
 import edu.java.enums.LinkType;
-import edu.java.handler.BaseSource;
+import edu.java.handler.LinkSource;
 
-public interface StackoverflowSource extends BaseSource<StackoverflowSource> {
+public interface StackoverflowSource extends LinkSource {
 
     @Override
-    default String urlPrefix() {
-        return "https://" + LinkType.STACKOVERFLOW.getDomain();
+    default String urlDomain() {
+        return LinkType.STACKOVERFLOW.getDomain();
     }
 }

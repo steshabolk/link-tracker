@@ -1,5 +1,6 @@
 package edu.java.handler.github;
 
+import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
 import edu.java.handler.LinkSourceClientExceptionHandler;
@@ -23,15 +24,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-class BranchTest {
+class RepositoryBranchTest {
 
     @InjectMocks
-    private Branch branch;
+    private RepositoryBranch repositoryBranch;
     @Mock
     private GithubService githubService;
     @Mock
@@ -52,15 +52,29 @@ class BranchTest {
         .url("https://github.com/JetBrains/kotlin/tree/branch-name")
         .checkedAt(CHECKED_AT)
         .build();
+    private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
     @Nested
-    class UrlPrefixTest {
+    class UrlDomainTest {
 
         @Test
-        void urlPrefixTest() {
-            String expected = "https://github.com";
+        void urlDomainTest() {
+            String expected = "github.com";
 
-            String actual = branch.urlPrefix();
+            String actual = repositoryBranch.urlDomain();
+
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    class UrlPathTest {
+
+        @Test
+        void urlPathTest() {
+            String expected = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/tree/(?<branch>[\\w-\\./]+)";
+
+            String actual = repositoryBranch.urlPath();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -73,7 +87,7 @@ class BranchTest {
         void urlPatternTest() {
             String expected = "https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/tree/(?<branch>[\\w-\\./]+)";
 
-            String actual = branch.urlPattern();
+            String actual = repositoryBranch.urlPattern();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -84,7 +98,7 @@ class BranchTest {
 
         @Test
         void linkMatcherTest() {
-            MatchResult matcher = branch.linkMatcher(LINK);
+            MatchResult matcher = repositoryBranch.linkMatcher(LINK);
 
             assertThat(matcher.groupCount()).isEqualTo(3);
             assertThat(matcher.group(1)).isEqualTo("JetBrains");
@@ -100,11 +114,11 @@ class BranchTest {
         void shouldSendUpdateWhenThereAreUpdates() {
             doReturn(Optional.of("new commits"))
                 .when(githubService)
-                .getBranchCommitsResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getBranchCommitsResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            branch.checkLinkUpdate(LINK);
+            repositoryBranch.checkLinkUpdate(LINK);
 
-            verify(githubService).getBranchCommitsResponse("JetBrains", "kotlin", "branch-name", CHECKED_AT);
+            verify(githubService).getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService).sendLinkUpdate(LINK, "new commits");
         }
@@ -113,11 +127,11 @@ class BranchTest {
         void shouldNotSendUpdateWhenThereAreNoUpdates() {
             doReturn(Optional.empty())
                 .when(githubService)
-                .getBranchCommitsResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getBranchCommitsResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            branch.checkLinkUpdate(LINK);
+            repositoryBranch.checkLinkUpdate(LINK);
 
-            verify(githubService).getBranchCommitsResponse("JetBrains", "kotlin", "branch-name", CHECKED_AT);
+            verify(githubService).getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }
@@ -126,52 +140,14 @@ class BranchTest {
         void shouldNotUpdateCheckAtWhenExceptionWasThrown() {
             doThrow(RuntimeException.class)
                 .when(githubService)
-                .getBranchCommitsResponse(anyString(), anyString(), anyString(), any(OffsetDateTime.class));
+                .getBranchCommitsResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            branch.checkLinkUpdate(LINK);
+            repositoryBranch.checkLinkUpdate(LINK);
 
-            verify(githubService).getBranchCommitsResponse("JetBrains", "kotlin", "branch-name", CHECKED_AT);
+            verify(githubService).getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT);
             verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-    }
-
-    @Nested
-    class LinkChainTest {
-
-        @Test
-        void shouldInvokeUpdateCheckingWhenLinkMatches() {
-            branch.processLinkChain(LINK);
-
-            verify(githubService).getBranchCommitsResponse(
-                anyString(),
-                anyString(),
-                anyString(),
-                any(OffsetDateTime.class)
-            );
-        }
-
-        @Test
-        void shouldInvokeNotNullNextChainElementWhenLinkDoesNotMatch() {
-            Link link = Link.builder()
-                .id(1L)
-                .linkType(LinkType.GITHUB)
-                .url("https://github.com/JetBrains/kotlin")
-                .checkedAt(CHECKED_AT)
-                .build();
-            Repository repo = mock(Repository.class);
-            branch.setNext(repo);
-
-            branch.processLinkChain(link);
-
-            verify(githubService, never()).getBranchCommitsResponse(
-                anyString(),
-                anyString(),
-                anyString(),
-                any(OffsetDateTime.class)
-            );
-            verify(repo).processLinkChain(link);
         }
     }
 }

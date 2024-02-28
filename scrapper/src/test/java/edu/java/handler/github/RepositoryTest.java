@@ -1,5 +1,6 @@
 package edu.java.handler.github;
 
+import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
 import edu.java.handler.LinkSourceClientExceptionHandler;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -52,15 +52,29 @@ class RepositoryTest {
         .url("https://github.com/JetBrains/kotlin")
         .checkedAt(CHECKED_AT)
         .build();
+    private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
     @Nested
-    class UrlPrefixTest {
+    class UrlDomainTest {
 
         @Test
-        void urlPrefixTest() {
-            String expected = "https://github.com";
+        void urlDomainTest() {
+            String expected = "github.com";
 
-            String actual = repository.urlPrefix();
+            String actual = repository.urlDomain();
+
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    @Nested
+    class UrlPathTest {
+
+        @Test
+        void urlPathTest() {
+            String expected = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)";
+
+            String actual = repository.urlPath();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -99,15 +113,15 @@ class RepositoryTest {
         void shouldSendUpdateWhenThereAreUpdates() {
             doReturn(Optional.of("new commits"))
                 .when(githubService)
-                .getRepoCommitsResponse(anyString(), anyString(), any(OffsetDateTime.class));
+                .getRepoCommitsResponse(any(RepositoryDto.class), any(OffsetDateTime.class));
             doReturn(Optional.of("new issues"))
                 .when(githubService)
-                .getIssuesAndPullsResponse(anyString(), anyString(), any(OffsetDateTime.class));
+                .getIssuesAndPullsResponse(any(RepositoryDto.class), any(OffsetDateTime.class));
 
             repository.checkLinkUpdate(LINK);
 
-            verify(githubService).getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT);
-            verify(githubService).getIssuesAndPullsResponse("JetBrains", "kotlin", CHECKED_AT);
+            verify(githubService).getRepoCommitsResponse(REPOSITORY, CHECKED_AT);
+            verify(githubService).getIssuesAndPullsResponse(REPOSITORY, CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService).sendLinkUpdate(LINK, "new commits\n\nnew issues");
         }
@@ -116,15 +130,15 @@ class RepositoryTest {
         void shouldNotSendUpdateWhenThereAreNoUpdates() {
             doReturn(Optional.empty())
                 .when(githubService)
-                .getRepoCommitsResponse(anyString(), anyString(), any(OffsetDateTime.class));
+                .getRepoCommitsResponse(any(RepositoryDto.class), any(OffsetDateTime.class));
             doReturn(Optional.empty())
                 .when(githubService)
-                .getIssuesAndPullsResponse(anyString(), anyString(), any(OffsetDateTime.class));
+                .getIssuesAndPullsResponse(any(RepositoryDto.class), any(OffsetDateTime.class));
 
             repository.checkLinkUpdate(LINK);
 
-            verify(githubService).getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT);
-            verify(githubService).getIssuesAndPullsResponse("JetBrains", "kotlin", CHECKED_AT);
+            verify(githubService).getRepoCommitsResponse(REPOSITORY, CHECKED_AT);
+            verify(githubService).getIssuesAndPullsResponse(REPOSITORY, CHECKED_AT);
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
         }
@@ -133,47 +147,18 @@ class RepositoryTest {
         void shouldNotUpdateCheckAtWhenExceptionWasThrown() {
             doThrow(RuntimeException.class)
                 .when(githubService)
-                .getRepoCommitsResponse(anyString(), anyString(), any(OffsetDateTime.class));
+                .getRepoCommitsResponse(any(RepositoryDto.class), any(OffsetDateTime.class));
 
             repository.checkLinkUpdate(LINK);
 
-            verify(githubService).getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT);
+            verify(githubService).getRepoCommitsResponse(REPOSITORY, CHECKED_AT);
             verify(githubService, never()).getIssuesAndPullsResponse(
-                anyString(),
-                anyString(),
+                any(RepositoryDto.class),
                 any(OffsetDateTime.class)
             );
             verify(clientExceptionHandler).processClientException(any(RuntimeException.class), any(Link.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-    }
-
-    @Nested
-    class LinkChainTest {
-
-        @Test
-        void shouldInvokeUpdateCheckingWhenLinkMatches() {
-            repository.processLinkChain(LINK);
-
-            verify(githubService).getRepoCommitsResponse(anyString(), anyString(), any(OffsetDateTime.class));
-        }
-
-        @Test
-        void shouldInvokeNotNullNextChainElementWhenLinkDoesNotMatch() {
-            Link link = Link.builder()
-                .id(1L)
-                .linkType(LinkType.GITHUB)
-                .url("https://github.com/JetBrains/kotlin/branch-name")
-                .checkedAt(CHECKED_AT)
-                .build();
-            Branch branch = mock(Branch.class);
-            repository.setNext(branch);
-
-            repository.processLinkChain(link);
-
-            verify(githubService, never()).getRepoCommitsResponse(anyString(), anyString(), any(OffsetDateTime.class));
-            verify(branch).processLinkChain(link);
         }
     }
 }

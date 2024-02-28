@@ -10,12 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import reactor.core.publisher.Mono;
 
+@RequiredArgsConstructor
 @Service
 public class StackoverflowService {
 
@@ -32,26 +32,19 @@ public class StackoverflowService {
     private final StackoverflowClient stackoverflowClient;
     private final LinkService linkService;
 
-    @Autowired
-    public StackoverflowService(StackoverflowClient stackoverflowClient, LinkService linkService) {
-        this.stackoverflowClient = stackoverflowClient;
-        this.linkService = linkService;
-    }
-
     public Optional<String> getQuestionResponse(String id, Link link) {
         return getQuestion(id)
             .map(QuestionDto::questions)
             .flatMap(questions -> {
                 if (CollectionUtils.isEmpty(questions)) {
                     linkService.updateLinkStatus(link, LinkStatus.BROKEN);
-                    return Mono.empty();
+                    return Optional.empty();
                 } else {
-                    return Mono.just(questions.getFirst());
+                    return Optional.of(questions.getFirst());
                 }
             })
             .filter(question -> question.updatedAt().isAfter(link.getCheckedAt()))
-            .map(this::getQuestionResponseMessage)
-            .blockOptional();
+            .map(this::getQuestionResponseMessage);
     }
 
     public Optional<String> getQuestionAnswersResponse(String id, OffsetDateTime lastCheckedAt) {
@@ -61,18 +54,17 @@ public class StackoverflowService {
             .map(answers -> answers.stream()
                 .filter(ans -> ans.updatedAt().isAfter(lastCheckedAt))
                 .collect(Collectors.toList()))
-            .map(this::getQuestionAnswersResponseMessage)
-            .blockOptional();
+            .map(this::getQuestionAnswersResponseMessage);
     }
 
-    private Mono<QuestionDto> getQuestion(String id) {
+    private Optional<QuestionDto> getQuestion(String id) {
         String url = getQuestionUrl(id);
-        return stackoverflowClient.getLinkUpdates(url, SITE_PARAM, QUESTION_RESPONSE);
+        return stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_RESPONSE);
     }
 
-    private Mono<QuestionAnswerDto> getQuestionAnswers(String id) {
+    private Optional<QuestionAnswerDto> getQuestionAnswers(String id) {
         String url = getQuestionAnswersUrl(id);
-        return stackoverflowClient.getLinkUpdates(url, SITE_PARAM, QUESTION_ANSWERS_RESPONSE);
+        return stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_ANSWERS_RESPONSE);
     }
 
     private String getQuestionUrl(String id) {

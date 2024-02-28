@@ -1,12 +1,12 @@
 package edu.java.handler.github;
 
 import edu.java.enums.LinkType;
-import edu.java.handler.BaseSource;
+import edu.java.handler.LinkSource;
 
-public interface GithubSource extends BaseSource<GithubSource> {
+public interface GithubSource extends LinkSource {
 
     @Override
-    default String urlPrefix() {
-        return "https://" + LinkType.GITHUB.getDomain();
+    default String urlDomain() {
+        return LinkType.GITHUB.getDomain();
     }
 }

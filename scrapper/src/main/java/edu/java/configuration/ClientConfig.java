@@ -1,27 +1,23 @@
 package edu.java.configuration;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
-@Configuration
+@RequiredArgsConstructor
+@Component
 public class ClientConfig {
 
     private final ApplicationConfig applicationConfig;
 
-    @Autowired
-    public ClientConfig(ApplicationConfig applicationConfig) {
-        this.applicationConfig = applicationConfig;
-    }
-
     @Bean("githubWebClient")
     public WebClient githubClient() {
-        return WebClient.builder().baseUrl(applicationConfig.client().githubApi()).build();
+        return WebClient.builder().baseUrl(applicationConfig.githubClient().api()).build();
     }
 
     @Bean("stackoverflowWebClient")
     public WebClient stackoverflowClient() {
-        return WebClient.builder().baseUrl(applicationConfig.client().stackoverflowApi()).build();
+        return WebClient.builder().baseUrl(applicationConfig.stackoverflowClient().api()).build();
     }
 }

@@ -3,7 +3,6 @@ package edu.java.client;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import edu.java.dto.stackoverflow.QuestionAnswerDto;
 import edu.java.dto.stackoverflow.QuestionDto;
-import edu.java.exception.LinkSourceException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -12,6 +11,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -20,13 +20,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -57,7 +59,7 @@ class StackoverflowClientTest {
     }
 
     @Nested
-    class LinkUpdatesTest {
+    class GetRequestTest {
 
         @SneakyThrows
         @Test
@@ -80,9 +82,10 @@ class StackoverflowClientTest {
             );
             String url = "/questions/24840667";
 
-            QuestionDto questionRes = stackoverflowClient.getLinkUpdates(url, SITE_PARAM, QUESTION_RESPONSE).block();
+            Optional<QuestionDto> optionalRes = stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_RESPONSE);
 
-            assertThat(questionRes).isNotNull();
+            assertThat(optionalRes).isPresent();
+            QuestionDto questionRes = optionalRes.get();
             assertThat(questionRes.questions().size()).isEqualTo(1);
             QuestionDto.Question question = questionRes.questions().get(0);
             assertThat(question.title()).isEqualTo("What is the regex to extract all the emojis from a string?");
@@ -106,10 +109,11 @@ class StackoverflowClientTest {
             );
             String url = "/questions/24840667/answers";
 
-            QuestionAnswerDto answersRes =
-                stackoverflowClient.getLinkUpdates(url, SITE_PARAM, QUESTION_ANSWERS_RESPONSE).block();
+            Optional<QuestionAnswerDto> optionalRes =
+                stackoverflowClient.doGet(url, SITE_PARAM, QUESTION_ANSWERS_RESPONSE);
 
-            assertThat(answersRes).isNotNull();
+            assertThat(optionalRes).isPresent();
+            QuestionAnswerDto answersRes = optionalRes.get();
             assertThat(answersRes.answers().size()).isEqualTo(4);
             List<String> answersIds = answersRes.answers().stream()
                 .map(QuestionAnswerDto.Answer::id)
@@ -136,9 +140,11 @@ class StackoverflowClientTest {
             );
             String url = "/err400";
 
-            assertThatThrownBy(() -> stackoverflowClient.getLinkUpdates(url, null, QUESTION_RESPONSE).block())
-                .isInstanceOf(LinkSourceException.class)
-                .hasMessageContaining("\"error_id\": 400");
+            WebClientResponseException ex = catchThrowableOfType(
+                () -> stackoverflowClient.doGet(url, null, QUESTION_RESPONSE),
+                WebClientResponseException.class
+            );
+            assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
     }
 }

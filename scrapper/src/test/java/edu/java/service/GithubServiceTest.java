@@ -3,6 +3,7 @@ package edu.java.service;
 import edu.java.client.GithubClient;
 import edu.java.dto.github.CommitDto;
 import edu.java.dto.github.IssueDto;
+import edu.java.dto.github.RepositoryDto;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -17,13 +18,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +41,7 @@ class GithubServiceTest {
         ZoneOffset.UTC
     );
     private static final String CHECKED_AT_FORMATTED = "2024-01-01T00:00:00Z";
+    private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
     @Nested
     class RepoCommitsResponseTest {
@@ -60,12 +62,12 @@ class GithubServiceTest {
                 new CommitDto(new CommitDto.Commit("commit 1"), "link 1"),
                 new CommitDto(new CommitDto.Commit("commit 2"), "link 2")
             );
-            doReturn(Mono.just(commits)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(commits)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT);
+                githubService.getRepoCommitsResponse(REPOSITORY, CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
@@ -82,12 +84,12 @@ class GithubServiceTest {
             Map<String, String> expectedParams = Map.of("since", CHECKED_AT_FORMATTED);
 
             List<CommitDto> commits = List.of();
-            doReturn(Mono.just(commits)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(commits)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT);
+                githubService.getRepoCommitsResponse(REPOSITORY, CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
@@ -95,17 +97,16 @@ class GithubServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(githubClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(githubClient).doGet(anyString(), anyMap(), any());
 
-            assertThatThrownBy(() -> githubService.getRepoCommitsResponse("JetBrains", "kotlin", CHECKED_AT))
+            assertThatThrownBy(() -> githubService.getRepoCommitsResponse(REPOSITORY, CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("client error");
         }
     }
 
     @Nested
-    class BranchCommitsResponseTest {
+    class RepositoryBranchCommitsResponseTest {
 
         @SuppressWarnings("unchecked")
         @Test
@@ -123,12 +124,12 @@ class GithubServiceTest {
                 new CommitDto(new CommitDto.Commit("commit 1"), "link 1"),
                 new CommitDto(new CommitDto.Commit("commit 2"), "link 2")
             );
-            doReturn(Mono.just(commits)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(commits)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getBranchCommitsResponse("JetBrains", "kotlin", "branch-name", CHECKED_AT);
+                githubService.getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
@@ -145,12 +146,12 @@ class GithubServiceTest {
             Map<String, String> expectedParams = Map.of("since", CHECKED_AT_FORMATTED, "sha", "branch-name");
 
             List<CommitDto> commits = List.of();
-            doReturn(Mono.just(commits)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(commits)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getBranchCommitsResponse("JetBrains", "kotlin", "branch-name", CHECKED_AT);
+                githubService.getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
@@ -158,15 +159,9 @@ class GithubServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(githubClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(githubClient).doGet(anyString(), anyMap(), any());
 
-            assertThatThrownBy(() -> githubService.getBranchCommitsResponse(
-                "JetBrains",
-                "kotlin",
-                "branch-name",
-                CHECKED_AT
-            ))
+            assertThatThrownBy(() -> githubService.getBranchCommitsResponse(REPOSITORY, "branch-name", CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("client error");
         }
@@ -191,12 +186,12 @@ class GithubServiceTest {
                 new IssueDto("link 1", "issue 1", null),
                 new IssueDto("link 2", "issue 2", null)
             );
-            doReturn(Mono.just(issues)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(issues)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getIssuesAndPullsResponse("JetBrains", "kotlin", CHECKED_AT);
+                githubService.getIssuesAndPullsResponse(REPOSITORY, CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isPresent();
@@ -213,12 +208,12 @@ class GithubServiceTest {
             Map<String, String> expectedParams = Map.of("since", CHECKED_AT_FORMATTED, "state", "all");
 
             List<IssueDto> issues = List.of();
-            doReturn(Mono.just(issues)).when(githubClient).getLinkUpdates(anyString(), anyMap(), any());
+            doReturn(Optional.of(issues)).when(githubClient).doGet(anyString(), anyMap(), any());
 
             Optional<String> actualResponse =
-                githubService.getIssuesAndPullsResponse("JetBrains", "kotlin", CHECKED_AT);
+                githubService.getIssuesAndPullsResponse(REPOSITORY, CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isEqualTo(expectedParams);
             assertThat(actualResponse).isEmpty();
@@ -226,10 +221,9 @@ class GithubServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(githubClient)
-                .getLinkUpdates(anyString(), anyMap(), any());
+            doThrow(new RuntimeException("client error")).when(githubClient).doGet(anyString(), anyMap(), any());
 
-            assertThatThrownBy(() -> githubService.getIssuesAndPullsResponse("JetBrains", "kotlin", CHECKED_AT))
+            assertThatThrownBy(() -> githubService.getIssuesAndPullsResponse(REPOSITORY, CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("client error");
         }
@@ -248,11 +242,11 @@ class GithubServiceTest {
             String expectedResponse = "➜ issue [title] was updated";
 
             IssueDto issue = new IssueDto("link", "title", CHECKED_AT.plusDays(1));
-            doReturn(Mono.just(issue)).when(githubClient).getLinkUpdates(anyString(), any(), any());
+            doReturn(Optional.of(issue)).when(githubClient).doGet(anyString(), any(), any());
 
-            Optional<String> actualResponse = githubService.getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            Optional<String> actualResponse = githubService.getIssueResponse(REPOSITORY, "1", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isNull();
             assertThat(actualResponse).isPresent();
@@ -268,11 +262,11 @@ class GithubServiceTest {
             String expectedUrl = "/repos/JetBrains/kotlin/issues/1";
 
             IssueDto issue = new IssueDto("link", "title", CHECKED_AT.minusDays(1));
-            doReturn(Mono.just(issue)).when(githubClient).getLinkUpdates(anyString(), any(), any());
+            doReturn(Optional.of(issue)).when(githubClient).doGet(anyString(), any(), any());
 
-            Optional<String> actualResponse = githubService.getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+            Optional<String> actualResponse = githubService.getIssueResponse(REPOSITORY, "1", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isNull();
             assertThat(actualResponse).isEmpty();
@@ -280,10 +274,9 @@ class GithubServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(githubClient)
-                .getLinkUpdates(anyString(), any(), any());
+            doThrow(new RuntimeException("client error")).when(githubClient).doGet(anyString(), any(), any());
 
-            assertThatThrownBy(() -> githubService.getIssueResponse("JetBrains", "kotlin", "1", CHECKED_AT))
+            assertThatThrownBy(() -> githubService.getIssueResponse(REPOSITORY, "1", CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("client error");
         }
@@ -302,12 +295,12 @@ class GithubServiceTest {
             String expectedResponse = "➜ PR [title] was updated";
 
             IssueDto pr = new IssueDto("link", "title", CHECKED_AT.plusDays(1));
-            doReturn(Mono.just(pr)).when(githubClient).getLinkUpdates(anyString(), any(), any());
+            doReturn(Optional.of(pr)).when(githubClient).doGet(anyString(), any(), any());
 
             Optional<String> actualResponse =
-                githubService.getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+                githubService.getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isNull();
             assertThat(actualResponse).isPresent();
@@ -323,12 +316,12 @@ class GithubServiceTest {
             String expectedUrl = "/repos/JetBrains/kotlin/pulls/1";
 
             IssueDto issue = new IssueDto("link", "title", CHECKED_AT.minusDays(1));
-            doReturn(Mono.just(issue)).when(githubClient).getLinkUpdates(anyString(), any(), any());
+            doReturn(Optional.of(issue)).when(githubClient).doGet(anyString(), any(), any());
 
             Optional<String> actualResponse =
-                githubService.getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT);
+                githubService.getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
 
-            verify(githubClient).getLinkUpdates(urlCaptor.capture(), paramsCaptor.capture(), any());
+            verify(githubClient).doGet(urlCaptor.capture(), paramsCaptor.capture(), any());
             assertThat(urlCaptor.getValue()).isEqualTo(expectedUrl);
             assertThat(paramsCaptor.getValue()).isNull();
             assertThat(actualResponse).isEmpty();
@@ -336,10 +329,9 @@ class GithubServiceTest {
 
         @Test
         void shouldThrowExceptionWhenClientTrowException() {
-            doReturn(Mono.error(new RuntimeException("client error"))).when(githubClient)
-                .getLinkUpdates(anyString(), any(), any());
+            doThrow(new RuntimeException("client error")).when(githubClient).doGet(anyString(), any(), any());
 
-            assertThatThrownBy(() -> githubService.getPullRequestResponse("JetBrains", "kotlin", "1", CHECKED_AT))
+            assertThatThrownBy(() -> githubService.getPullRequestResponse(REPOSITORY, "1", CHECKED_AT))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("client error");
         }
