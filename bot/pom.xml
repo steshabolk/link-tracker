@@ -49,12 +49,6 @@
             <artifactId>java-telegram-bot-api</artifactId>
         </dependency>
 
-        <!-- Emoji -->
-        <dependency>
-            <groupId>com.vdurmont</groupId>
-            <artifactId>emoji-java</artifactId>
-        </dependency>
-
         <!-- Dev Tools -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

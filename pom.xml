@@ -27,7 +27,6 @@
         <!-- Other -->
         <jetbrains-annotations.version>24.1.0</jetbrains-annotations.version>
         <java-telegram-bot-api.version>7.0.1</java-telegram-bot-api.version>
-        <emoji-java>5.1.1</emoji-java>
 
         <!-- Tests -->
         <testcontainers.version>1.19.4</testcontainers.version>
@@ -58,12 +57,6 @@
                 <artifactId>java-telegram-bot-api</artifactId>
                 <version>${java-telegram-bot-api.version}</version>
             </dependency>
-            <dependency>
-                <groupId>com.vdurmont</groupId>
-                <artifactId>emoji-java</artifactId>
-                <version>${emoji-java}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
