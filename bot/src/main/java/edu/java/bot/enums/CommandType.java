@@ -17,6 +17,6 @@ public enum CommandType {
     private final String description;
 
     public String getCommandBulletPoint() {
-        return String.format("◉ *%s* ➜ %s", this.getCommand(), this.getDescription());
+        return String.format("➜ *%s* - %s", this.getCommand(), this.getDescription());
     }
 }

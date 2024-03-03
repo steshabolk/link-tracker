@@ -1,8 +1,6 @@
 package edu.java.bot.util;
 
-import edu.java.bot.dto.LinkDto;
-import edu.java.bot.enums.LinkType;
-import edu.java.bot.exception.ApiException;
+import java.net.URI;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,11 +19,10 @@ class LinkParserTest {
 
         @ParameterizedTest
         @MethodSource("edu.java.bot.util.LinkParserTest#validLink")
-        void shouldReturnParsedLinkWhenLinkIsValid(LinkType linkType, String url) {
-            LinkDto linkDto = LinkParser.parseLink(url);
+        void shouldReturnLinkWhenLinkIsValid(String url) {
+            URI parsedLink = LinkParser.parseLink(url);
 
-            assertThat(linkDto.linkType()).isEqualTo(linkType);
-            assertThat(linkDto.uri().toString()).isEqualTo(url);
+            assertThat(parsedLink.toString()).isEqualTo(url);
         }
 
         @ParameterizedTest
@@ -34,25 +31,28 @@ class LinkParserTest {
             String expected = ":heavy_multiplication_x: your link is invalid. please try again";
 
             assertThatThrownBy(() -> LinkParser.parseLink(url))
-                .isInstanceOf(ApiException.class)
+                .isInstanceOf(RuntimeException.class)
                 .hasMessage(expected);
         }
 
         @ParameterizedTest
-        @MethodSource("edu.java.bot.util.LinkParserTest#unsupportedLink")
-        void shouldThrowExceptionWhenLinkIsUnsupported(String url) {
+        @MethodSource("edu.java.bot.util.LinkParserTest#notSupportedLink")
+        void shouldThrowExceptionWhenLinkIsNotSupported(String url) {
             String expected = ":heavy_multiplication_x: sorry, tracking is not supported on this resource";
 
             assertThatThrownBy(() -> LinkParser.parseLink(url))
-                .isInstanceOf(ApiException.class)
+                .isInstanceOf(RuntimeException.class)
                 .hasMessage(expected);
         }
     }
 
     static Stream<Arguments> validLink() {
         return Stream.of(
-            Arguments.of(LinkType.GITHUB, "https://github.com/JetBrains/kotlin"),
-            Arguments.of(LinkType.STACKOVERFLOW, "https://stackoverflow.com/questions/24840667")
+            Arguments.of("https://github.com/JetBrains/kotlin"),
+            Arguments.of("https://github.com/JetBrains/kotlin/tree/branch-name"),
+            Arguments.of("https://github.com/JetBrains/kotlin/pull/1"),
+            Arguments.of("https://github.com/JetBrains/kotlin/issues/1"),
+            Arguments.of("https://stackoverflow.com/questions/24840667")
         );
     }
 
@@ -66,10 +66,18 @@ class LinkParserTest {
         );
     }
 
-    static Stream<Arguments> unsupportedLink() {
+    static Stream<Arguments> notSupportedLink() {
         return Stream.of(
             Arguments.of("https://www.baeldung.com/mockito-series"),
-            Arguments.of("https://leetcode.com/problemset/algorithms/")
+            Arguments.of("https://leetcode.com/problemset/algorithms/"),
+            Arguments.of("https://github.com"),
+            Arguments.of("https://stackoverflow.com"),
+            Arguments.of("https://github.com/JetBrains/kotlin/releases"),
+            Arguments.of("https://github.com/JetBrains/kotlin/stargazers"),
+            Arguments.of("https://github.com/JetBrains/kotlin/pulls"),
+            Arguments.of("https://github.com/JetBrains/kotlin/issues"),
+            Arguments.of("https://stackoverflow.com/a/32872406"),
+            Arguments.of("https://stackoverflow.com/questions/24840667#32872406")
         );
     }
 }

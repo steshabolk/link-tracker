@@ -1,46 +1,65 @@
 package edu.java.bot.service;
 
-import edu.java.bot.dto.LinkDto;
-import edu.java.bot.enums.LinkType;
+import edu.java.bot.client.ScrapperClient;
+import edu.java.bot.dto.request.AddLinkRequest;
+import edu.java.bot.dto.request.RemoveLinkRequest;
+import edu.java.bot.dto.response.LinkResponse;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class ScrapperService {
 
-    private final Map<LinkType, List<URI>> links;
+    private final ScrapperClient scrapperClient;
 
-    public ScrapperService() {
-        this.links = new HashMap<>();
-        Arrays.stream(LinkType.values()).forEach(link -> links.put(link, new ArrayList<>()));
+    public void registerChat(Long chatId) {
+        log.debug("register chat={}", chatId);
+        try {
+            scrapperClient.registerChat(chatId);
+        } catch (RuntimeException ex) {
+            logClientException(ex);
+        }
     }
 
-    public void register(Long chatId, Long userId) {
-        log.debug(String.format("the user{id=%s} has registered the chat{id=%s}", userId, chatId));
+    public void deleteChat(Long chatId) {
+        log.debug("delete chat={}", chatId);
+        try {
+            scrapperClient.deleteChat(chatId);
+        } catch (RuntimeException ex) {
+            logClientException(ex);
+        }
     }
 
-    public void track(Long chatId, LinkDto linkDto) {
-        log.debug(String.format("chat{id=%s}: track the link=%s", chatId, linkDto.uri()));
-        links.get(linkDto.linkType()).add(linkDto.uri());
+    public void addLink(Long chatId, URI link) {
+        log.debug("chat={}: add link={}", chatId, link);
+        scrapperClient.addLink(chatId, new AddLinkRequest(link));
     }
 
-    public void untrack(Long chatId, LinkDto linkDto) {
-        log.debug(String.format("chat{id=%s}: untrack the link=%s", chatId, linkDto.uri()));
-        links.get(linkDto.linkType()).remove(linkDto.uri());
+    public void removeLink(Long chatId, URI link) {
+        log.debug("chat={}: remove link={}", chatId, link);
+        scrapperClient.removeLink(chatId, new RemoveLinkRequest(link));
     }
 
-    public Map<LinkType, List<URI>> getLinks(Long chatId) {
-        log.debug(String.format("get links for the chat{id=%s}", chatId));
-        return links.entrySet().stream()
-            .filter(entry -> !entry.getValue().isEmpty())
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    public List<URI> getLinks(Long chatId) {
+        log.debug("get links for the chat={}", chatId);
+        return scrapperClient.getLinks(chatId).links()
+            .stream()
+            .map(LinkResponse::url)
+            .toList();
+    }
+
+    private void logClientException(RuntimeException ex) {
+        log.info("client error: {}", ex.getMessage());
+        if (ex instanceof WebClientResponseException clientExc
+            && ArrayUtils.isNotEmpty(clientExc.getResponseBodyAsByteArray())) {
+            log.info("response: {}", clientExc.getResponseBodyAsString());
+        }
     }
 }

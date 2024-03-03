@@ -1,5 +1,7 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN}
+  scrapper-client:
+    api: http://localhost:8080
 
 spring:
   application:
@@ -8,9 +10,25 @@ spring:
     time-zone: UTC
   config:
     import: optional:file:.env[.properties]
+  messages:
+    basename: messages
+    encoding: UTF-8
 
 server:
   port: 8090
 
 logging:
   config: classpath:log4j2-plain.xml
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: method
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

@@ -9,7 +9,7 @@ public interface Reply {
 
     default boolean isReply(Update update, String botReply) {
         Message reply = update.message().replyToMessage();
-        return reply != null && EmojiParser.removeAllEmojis(EmojiParser.parseToUnicode(botReply))
+        return reply != null && EmojiParser.removeAllEmojis(EmojiParser.parseToUnicode(botReply)).replace("*", "")
             .equals(EmojiParser.removeAllEmojis(reply.text()));
     }
 
