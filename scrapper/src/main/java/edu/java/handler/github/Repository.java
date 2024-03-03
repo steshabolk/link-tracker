@@ -2,6 +2,7 @@ package edu.java.handler.github;
 
 import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
+import edu.java.enums.GithubRegex;
 import edu.java.service.BotService;
 import edu.java.service.GithubService;
 import edu.java.service.LinkService;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class Repository extends AbstractGithubSource {
 
-    private static final String URL_PATH = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)";
     private final GithubService githubService;
     private final BotService botService;
     private final LinkService linkService;
@@ -31,7 +31,7 @@ public class Repository extends AbstractGithubSource {
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return GithubRegex.REPOSITORY.regex();
     }
 
     @Override

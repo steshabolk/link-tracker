@@ -1,5 +1,6 @@
 package edu.java.configuration;
 
+import edu.java.client.BotClient;
 import edu.java.client.GithubClient;
 import edu.java.client.StackoverflowClient;
 import java.time.Duration;
@@ -26,6 +27,11 @@ public class ClientConfig {
     @Bean
     public StackoverflowClient stackoverflowClient() {
         return buildHttpInterface(applicationConfig.stackoverflowClient().api(), StackoverflowClient.class);
+    }
+
+    @Bean
+    public BotClient botClient() {
+        return buildHttpInterface(applicationConfig.botClient().api(), BotClient.class);
     }
 
     private <T> T buildHttpInterface(String baseUrl, Class<T> serviceType) {

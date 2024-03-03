@@ -1,6 +1,7 @@
 package edu.java.handler.stackoverflow;
 
 import edu.java.entity.Link;
+import edu.java.enums.StackoverflowRegex;
 import edu.java.service.BotService;
 import edu.java.service.LinkService;
 import edu.java.service.StackoverflowService;
@@ -17,14 +18,13 @@ import org.springframework.util.StringUtils;
 @Component
 public class Question implements StackoverflowSource {
 
-    private static final String URL_PATH = "/questions/(?<id>[\\d]+)";
     private final StackoverflowService stackoverflowService;
     private final BotService botService;
     private final LinkService linkService;
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return StackoverflowRegex.QUESTION.regex();
     }
 
     @Override

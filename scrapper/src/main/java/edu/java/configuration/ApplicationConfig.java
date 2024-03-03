@@ -16,7 +16,10 @@ public record ApplicationConfig(
     @NotNull
     GithubClient githubClient,
     @NotNull
-    StackoverflowClient stackoverflowClient
+    StackoverflowClient stackoverflowClient,
+
+    @NotNull
+    BotClient botClient
 ) {
     public record LinkUpdaterScheduler(boolean enable, @NotNull Duration interval, @NotNull Duration forceCheckDelay) {
     }
@@ -25,5 +28,8 @@ public record ApplicationConfig(
     }
 
     public record StackoverflowClient(@DefaultValue("https://api.stackexchange.com/2.3") String api) {
+    }
+
+    public record BotClient(@NotNull String api) {
     }
 }

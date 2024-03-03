@@ -7,6 +7,8 @@ app:
     api: https://api.github.com
   stackoverflow-client:
     api: https://api.stackexchange.com/2.3
+  bot-client:
+    api: http://localhost:8090
 
 spring:
   application:
@@ -17,3 +19,16 @@ server:
 
 logging:
   config: classpath:log4j2-plain.xml
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: method
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

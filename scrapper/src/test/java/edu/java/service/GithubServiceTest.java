@@ -41,7 +41,7 @@ class GithubServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "◉ new commits were pushed:\n"
+            String expectedResponse = "✔ new commits were pushed:\n"
                 + "➜ commit 1 [link 1]\n"
                 + "➜ commit 2 [link 2]";
             List<CommitDto> commits = List.of(
@@ -82,7 +82,7 @@ class GithubServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "◉ new commits were pushed:\n"
+            String expectedResponse = "✔ new commits were pushed:\n"
                 + "➜ commit 1 [link 1]\n"
                 + "➜ commit 2 [link 2]";
 
@@ -128,7 +128,7 @@ class GithubServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "◉ updates in issues and pull requests:\n"
+            String expectedResponse = "✔ updates in issues and pull requests:\n"
                 + "➜ issue 1 [link 1]\n"
                 + "➜ issue 2 [link 2]";
 
