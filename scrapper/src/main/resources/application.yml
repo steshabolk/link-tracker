@@ -9,6 +9,14 @@ app:
     api: https://api.stackexchange.com/2.3
   bot-client:
     api: http://localhost:8090
+  source-regex:
+    github:
+      repository: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
+      branch: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/tree/(?<branch>[\w-\./]+)
+      pull-request: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/pull/(?<num>\d+)
+      issue: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/issues/(?<num>\d+)
+    stackoverflow:
+      question: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
 
 spring:
   application:

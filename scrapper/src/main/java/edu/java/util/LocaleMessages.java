@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
 @Component
-public class Messages {
+public class LocaleMessages {
 
     private final MessageSource messageSource;
 

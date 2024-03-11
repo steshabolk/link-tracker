@@ -1,7 +1,6 @@
 package edu.java.handler.stackoverflow;
 
 import edu.java.entity.Link;
-import edu.java.enums.StackoverflowRegex;
 import edu.java.service.BotService;
 import edu.java.service.LinkService;
 import edu.java.service.StackoverflowService;
@@ -11,6 +10,7 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -18,13 +18,16 @@ import org.springframework.util.StringUtils;
 @Component
 public class Question implements StackoverflowSource {
 
+    @Value("${app.source-regex.stackoverflow.question}")
+    private String regex;
+
     private final StackoverflowService stackoverflowService;
     private final BotService botService;
     private final LinkService linkService;
 
     @Override
     public String urlPath() {
-        return StackoverflowRegex.QUESTION.regex();
+        return regex;
     }
 
     @Override

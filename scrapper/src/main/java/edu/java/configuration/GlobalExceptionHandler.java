@@ -2,7 +2,7 @@ package edu.java.configuration;
 
 import edu.java.exception.ApiErrorResponse;
 import edu.java.exception.ApiException;
-import edu.java.util.Messages;
+import edu.java.util.LocaleMessages;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private static final String VALIDATION_FAILURE_CODE = "VALIDATION_FAILURE";
-    private final Messages messages;
+    private final LocaleMessages messages;
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<?> handleApiErrorException(ApiException ex) {

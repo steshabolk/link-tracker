@@ -2,7 +2,6 @@ package edu.java.handler.github;
 
 import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
-import edu.java.enums.GithubRegex;
 import edu.java.service.BotService;
 import edu.java.service.GithubService;
 import edu.java.service.LinkService;
@@ -12,11 +11,15 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class Repository extends AbstractGithubSource {
+
+    @Value("${app.source-regex.github.repository}")
+    private String regex;
 
     private final GithubService githubService;
     private final BotService botService;
@@ -31,7 +34,7 @@ public class Repository extends AbstractGithubSource {
 
     @Override
     public String urlPath() {
-        return GithubRegex.REPOSITORY.regex();
+        return regex;
     }
 
     @Override
