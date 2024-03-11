@@ -28,15 +28,17 @@ public class BotService {
         );
         String updateResponse = getUpdateResponse(linkUpdate.url(), linkUpdate.description());
         linkUpdate.tgChatIds()
-            .forEach(chatId -> {
-                SendResponse botResponse = botListener.execute(BotSendMessage.getSendMessage(chatId, updateResponse));
-                if (!botResponse.isOk()) {
-                    log.debug("chat={}: {} {}", chatId, botResponse.errorCode(), botResponse.description());
-                    if (botResponse.errorCode() == HttpStatus.FORBIDDEN.value()) {
-                        scrapperService.deleteChat(chatId);
-                    }
-                }
-            });
+            .forEach(chatId -> sendMessageToBot(chatId, updateResponse));
+    }
+
+    private void sendMessageToBot(Long chatId, String updateResponse) {
+        SendResponse botResponse = botListener.execute(BotSendMessage.getSendMessage(chatId, updateResponse));
+        if (!botResponse.isOk()) {
+            log.debug("chat={}: {} {}", chatId, botResponse.errorCode(), botResponse.description());
+            if (botResponse.errorCode() == HttpStatus.FORBIDDEN.value()) {
+                scrapperService.deleteChat(chatId);
+            }
+        }
     }
 
     private String getUpdateResponse(URI url, String message) {

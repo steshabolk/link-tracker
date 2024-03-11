@@ -2,6 +2,14 @@ app:
   telegram-token: ${TELEGRAM_TOKEN}
   scrapper-client:
     api: http://localhost:8080
+  source-regex:
+    github:
+        repository: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
+        branch: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/tree/(?<branch>[\w-\./]+)
+        pull-request: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/pull/(?<num>\d+)
+        issue: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/issues/(?<num>\d+)
+    stackoverflow:
+        question: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
 
 spring:
   application:

@@ -6,18 +6,25 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
+import edu.java.bot.enums.LinkType;
 import edu.java.bot.service.ScrapperService;
+import edu.java.bot.util.LinkTypeUtil;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(MockitoExtension.class)
 class ListCommandTest {
@@ -32,6 +39,17 @@ class ListCommandTest {
     private Message message;
     @Mock
     private Chat chat;
+    static MockedStatic<LinkTypeUtil> linkTypeUtilMock;
+
+    @BeforeAll
+    public static void init() {
+        linkTypeUtilMock = mockStatic(LinkTypeUtil.class);
+    }
+
+    @AfterAll
+    public static void close() {
+        linkTypeUtilMock.close();
+    }
 
     @Nested
     class CommandTypeTest {
@@ -124,6 +142,8 @@ class ListCommandTest {
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
+            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("github.com")).thenReturn(Optional.of(LinkType.GITHUB));
+            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("stackoverflow.com")).thenReturn(Optional.of(LinkType.STACKOVERFLOW));
 
             SendMessage sendMessage = listCommand.handle(update);
 

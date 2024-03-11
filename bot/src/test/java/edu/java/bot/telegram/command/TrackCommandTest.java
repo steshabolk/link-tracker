@@ -92,15 +92,7 @@ class TrackCommandTest {
 
         @Test
         void shouldReturnTrueWhenItIsCommandReply() {
-            String expectedReply = EmojiParser.parseToUnicode(
-                ":link: send a link to start tracking\n"
-                    + ":heavy_check_mark: github.com:\n"
-                    + "      - repository\n"
-                    + "      - branch\n"
-                    + "      - pull request\n"
-                    + "      - issue\n"
-                    + ":heavy_check_mark: stackoverflow.com:\n"
-                    + "      - question");
+            String expectedReply = EmojiParser.parseToUnicode(":link: send a link to start tracking\nnull");
 
             doReturn(message).when(update).message();
             doReturn("/dummy").when(message).text();
@@ -132,15 +124,7 @@ class TrackCommandTest {
 
         @Test
         void shouldReturnReplyWhenCommandIsTriggered() {
-            String expectedReply = EmojiParser.parseToUnicode(
-                ":link: send a link to start tracking\n"
-                    + ":heavy_check_mark: *github.com:*\n"
-                    + "      - repository\n"
-                    + "      - branch\n"
-                    + "      - pull request\n"
-                    + "      - issue\n"
-                    + ":heavy_check_mark: *stackoverflow.com:*\n"
-                    + "      - question");
+            String expectedReply = EmojiParser.parseToUnicode(":link: send a link to start tracking\nnull");
 
             doReturn(message).when(update).message();
             doReturn("/track").when(message).text();

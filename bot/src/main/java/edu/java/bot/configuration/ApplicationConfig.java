@@ -1,7 +1,9 @@
 package edu.java.bot.configuration;
 
+import edu.java.bot.enums.LinkType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -12,9 +14,11 @@ public record ApplicationConfig(
     String telegramToken,
 
     @NotNull
-    ScrapperClient scrapperClient
+    ScrapperClientConfig scrapperClient,
+
+    Map<LinkType, Map<String, String>> sourceRegex
 ) {
 
-    public record ScrapperClient(@NotNull String api) {
+    public record ScrapperClientConfig(@NotNull String api) {
     }
 }

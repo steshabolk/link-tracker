@@ -4,13 +4,12 @@ import edu.java.bot.client.ScrapperClient;
 import edu.java.bot.dto.request.AddLinkRequest;
 import edu.java.bot.dto.request.RemoveLinkRequest;
 import edu.java.bot.dto.response.LinkResponse;
+import edu.java.bot.handler.ClientExceptionHandler;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -18,13 +17,14 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 public class ScrapperService {
 
     private final ScrapperClient scrapperClient;
+    private final ClientExceptionHandler clientExceptionHandler;
 
     public void registerChat(Long chatId) {
         log.debug("register chat={}", chatId);
         try {
             scrapperClient.registerChat(chatId);
         } catch (RuntimeException ex) {
-            logClientException(ex);
+            clientExceptionHandler.handleClientResponse(ex);
         }
     }
 
@@ -33,7 +33,7 @@ public class ScrapperService {
         try {
             scrapperClient.deleteChat(chatId);
         } catch (RuntimeException ex) {
-            logClientException(ex);
+            clientExceptionHandler.handleClientResponse(ex);
         }
     }
 
@@ -53,13 +53,5 @@ public class ScrapperService {
             .stream()
             .map(LinkResponse::url)
             .toList();
-    }
-
-    private void logClientException(RuntimeException ex) {
-        log.info("client error: {}", ex.getMessage());
-        if (ex instanceof WebClientResponseException clientExc
-            && ArrayUtils.isNotEmpty(clientExc.getResponseBodyAsByteArray())) {
-            log.info("response: {}", clientExc.getResponseBodyAsString());
-        }
     }
 }
