@@ -17,12 +17,16 @@ public class MigrationsTest extends IntegrationTest {
     private static final String TABLES_SQL = """
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_schema NOT IN ('pg_catalog', 'information_schema');
+        WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
         """;
     private static final String COLUMNS_SQL = """
         SELECT column_name
         FROM information_schema.columns
-        WHERE table_name = ?;
+        WHERE table_name = ?
+        """;
+    private static final String SEQUENCES_SQL = """
+        SELECT sequence_name
+        FROM information_schema.sequences
         """;
 
     @SneakyThrows
@@ -61,6 +65,24 @@ public class MigrationsTest extends IntegrationTest {
 
         assertThat(actualColumns.size()).isEqualTo(expectedColumns.size());
         assertThat(actualColumns).containsExactlyInAnyOrderElementsOf(expectedColumns);
+    }
+
+    @SneakyThrows
+    @Test
+    public void sequencesTest() {
+        List<String> expectedSequences = List.of("chats_id_seq", "links_id_seq");
+
+        ResultSet resultSet = POSTGRES.createConnection("")
+            .createStatement()
+            .executeQuery(SEQUENCES_SQL);
+
+        List<String> actualSequences = new ArrayList<>();
+        while (resultSet.next()) {
+            actualSequences.add(resultSet.getString("sequence_name"));
+        }
+
+        assertThat(actualSequences.size()).isEqualTo(2);
+        assertThat(actualSequences).containsExactlyInAnyOrderElementsOf(expectedSequences);
     }
 
     static Stream<Arguments> tableColumns() {
