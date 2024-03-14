@@ -5,15 +5,19 @@ import edu.java.enums.LinkType;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @EqualsAndHashCode(exclude = {"chats"})
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Getter
 @Setter
-@Builder
 public class Link {
 
     private Long id;
