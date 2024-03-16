@@ -72,14 +72,14 @@ public class GithubService {
     }
 
     private String getCommitsResponseMessage(List<CommitDto> commits) {
-        return "◉ new commits were pushed:\n"
+        return "✔ new commits were pushed:\n"
             + commits.stream()
             .map(CommitDto::getResponseBulletPoint)
             .collect(Collectors.joining("\n"));
     }
 
     private String getIssuesAndPullsResponseMessage(List<IssueDto> issues) {
-        return "◉ updates in issues and pull requests:\n"
+        return "✔ updates in issues and pull requests:\n"
             + issues.stream()
             .map(IssueDto::getResponseBulletPoint)
             .collect(Collectors.joining("\n"));

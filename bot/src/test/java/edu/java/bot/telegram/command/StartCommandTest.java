@@ -96,13 +96,11 @@ class StartCommandTest {
             String expectedReply = EmojiParser.parseToUnicode(
                 "*hi!* :wave:\n"
                     + "this is a link tracking bot :robot_face:\n"
-                    + "◉ */help* ➜ show commands");
+                    + "➜ */help* - show commands");
 
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
-            doReturn(user).when(message).from();
-            doReturn(2L).when(user).id();
 
             SendMessage sendMessage = startCommand.handle(update);
 

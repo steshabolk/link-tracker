@@ -6,9 +6,11 @@ import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+@EqualsAndHashCode(exclude = {"chats"})
 @Getter
 @Setter
 @Builder
@@ -20,9 +22,11 @@ public class Link {
 
     private String url;
 
-    private OffsetDateTime checkedAt;
+    @Builder.Default
+    private OffsetDateTime checkedAt = OffsetDateTime.now();
 
-    private LinkStatus status;
+    @Builder.Default
+    private LinkStatus status = LinkStatus.ACTIVE;
 
     @Builder.Default
     private Set<Chat> chats = new HashSet<>();

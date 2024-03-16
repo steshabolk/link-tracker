@@ -8,18 +8,23 @@ import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
 import edu.java.bot.enums.LinkType;
 import edu.java.bot.service.ScrapperService;
+import edu.java.bot.util.LinkTypeUtil;
 import java.net.URI;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockStatic;
 
 @ExtendWith(MockitoExtension.class)
 class ListCommandTest {
@@ -34,6 +39,17 @@ class ListCommandTest {
     private Message message;
     @Mock
     private Chat chat;
+    static MockedStatic<LinkTypeUtil> linkTypeUtilMock;
+
+    @BeforeAll
+    public static void init() {
+        linkTypeUtilMock = mockStatic(LinkTypeUtil.class);
+    }
+
+    @AfterAll
+    public static void close() {
+        linkTypeUtilMock.close();
+    }
 
     @Nested
     class CommandTypeTest {
@@ -96,9 +112,9 @@ class ListCommandTest {
         void shouldReturnEmptyListReplyWhenListOfLinksIsEmpty() {
             String expectedReply = EmojiParser.parseToUnicode(
                 ":bookmark_tabs: your list of tracked links is empty\n"
-                    + "◉ */track* ➜ start tracking a link");
+                    + "➜ */track* - start tracking a link");
 
-            doReturn(Map.of()).when(scrapperService).getLinks(1L);
+            doReturn(List.of()).when(scrapperService).getLinks(1L);
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
@@ -112,23 +128,22 @@ class ListCommandTest {
 
         @Test
         void shouldReturnLinksWhenListOfLinksIsNotEmpty() {
-            URI githubUri = URI.create("https://github.com/JetBrains/kotlin");
-            URI stackoverflowUri = URI.create("https://stackoverflow.com/questions/tagged/java");
-            Map<LinkType, List<URI>> links = new LinkedHashMap<>();
-            links.put(LinkType.GITHUB, List.of(githubUri));
-            links.put(LinkType.STACKOVERFLOW, List.of(stackoverflowUri));
+            URI githubUrl = URI.create("https://github.com/JetBrains/kotlin");
+            URI stackoverflowUrl = URI.create("https://stackoverflow.com/questions/24840667");
 
             String expectedReply = EmojiParser.parseToUnicode(
                 ":link: *GITHUB*\n"
-                    + "◉ https://github.com/JetBrains/kotlin\n"
+                    + "➜ https://github.com/JetBrains/kotlin\n"
                     + "\n" +
                     ":link: *STACKOVERFLOW*\n"
-                    + "◉ https://stackoverflow.com/questions/tagged/java");
+                    + "➜ https://stackoverflow.com/questions/24840667");
 
-            doReturn(links).when(scrapperService).getLinks(1L);
+            doReturn(List.of(githubUrl, stackoverflowUrl)).when(scrapperService).getLinks(1L);
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
+            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("github.com")).thenReturn(Optional.of(LinkType.GITHUB));
+            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("stackoverflow.com")).thenReturn(Optional.of(LinkType.STACKOVERFLOW));
 
             SendMessage sendMessage = listCommand.handle(update);
 

@@ -47,7 +47,7 @@ public class StackoverflowService {
     }
 
     private String getQuestionResponseMessage(QuestionDto.Question question) {
-        return String.format("◉ question [%s] was updated", question.title());
+        return String.format("✔ question [%s] was updated", question.title());
     }
 
     private String getQuestionAnswersResponseMessage(List<QuestionAnswerDto.Answer> answers) {

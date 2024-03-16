@@ -10,6 +10,7 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,14 +18,16 @@ import org.springframework.util.StringUtils;
 @Component
 public class Question implements StackoverflowSource {
 
-    private static final String URL_PATH = "/questions/(?<id>[\\d]+)";
+    @Value("${app.source-regex.stackoverflow.question}")
+    private String regex;
+
     private final StackoverflowService stackoverflowService;
     private final BotService botService;
     private final LinkService linkService;
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return regex;
     }
 
     @Override

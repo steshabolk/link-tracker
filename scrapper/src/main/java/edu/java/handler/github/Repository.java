@@ -11,13 +11,16 @@ import java.util.regex.MatchResult;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class Repository extends AbstractGithubSource {
 
-    private static final String URL_PATH = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)";
+    @Value("${app.source-regex.github.repository}")
+    private String regex;
+
     private final GithubService githubService;
     private final BotService botService;
     private final LinkService linkService;
@@ -31,7 +34,7 @@ public class Repository extends AbstractGithubSource {
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return regex;
     }
 
     @Override

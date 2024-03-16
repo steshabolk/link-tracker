@@ -1,7 +1,9 @@
 package edu.java.configuration;
 
+import edu.java.enums.LinkType;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -16,7 +18,10 @@ public record ApplicationConfig(
     @NotNull
     GithubClient githubClient,
     @NotNull
-    StackoverflowClient stackoverflowClient
+    StackoverflowClient stackoverflowClient,
+    @NotNull
+    BotClient botClient,
+    Map<LinkType, Map<String, String>> sourceRegex
 ) {
     public record LinkUpdaterScheduler(boolean enable, @NotNull Duration interval, @NotNull Duration forceCheckDelay) {
     }
@@ -25,5 +30,8 @@ public record ApplicationConfig(
     }
 
     public record StackoverflowClient(@DefaultValue("https://api.stackexchange.com/2.3") String api) {
+    }
+
+    public record BotClient(@NotNull String api) {
     }
 }

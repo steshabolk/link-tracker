@@ -13,10 +13,9 @@ import java.util.Optional;
 import java.util.regex.MatchResult;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,16 +25,16 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = Question.class)
 class QuestionTest {
 
-    @InjectMocks
+    @Autowired
     private Question question;
-    @Mock
+    @MockBean
     private StackoverflowService stackoverflowService;
-    @Mock
+    @MockBean
     private BotService botService;
-    @Mock
+    @MockBean
     private LinkService linkService;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
@@ -68,7 +67,7 @@ class QuestionTest {
 
         @Test
         void urlPathTest() {
-            String expected = "/questions/(?<id>[\\d]+)";
+            String expected = "/(?:questions|q)/(?<id>[\\d]+)[/\\w-\\d]*";
 
             String actual = question.urlPath();
 
@@ -81,7 +80,7 @@ class QuestionTest {
 
         @Test
         void urlPatternTest() {
-            String expected = "https://stackoverflow.com/questions/(?<id>[\\d]+)";
+            String expected = "https://stackoverflow.com/(?:questions|q)/(?<id>[\\d]+)[/\\w-\\d]*";
 
             String actual = question.urlPattern();
 

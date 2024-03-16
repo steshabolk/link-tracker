@@ -51,7 +51,7 @@ class StackoverflowServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "◉ question [title] was updated";
+            String expectedResponse = "✔ question [title] was updated";
 
             QuestionDto question = new QuestionDto(List.of(new QuestionDto.Question(CHECKED_AT.plusDays(1), "title")));
             doReturn(question).when(stackoverflowClient).getQuestion("24840667");

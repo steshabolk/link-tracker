@@ -7,12 +7,15 @@ import edu.java.service.GithubService;
 import edu.java.service.LinkService;
 import java.time.OffsetDateTime;
 import java.util.regex.MatchResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RepositoryBranch extends AbstractGithubSource {
 
-    private static final String URL_PATH = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/tree/(?<branch>[\\w-\\./]+)";
+    @Value("${app.source-regex.github.branch}")
+    private String regex;
+
     private final GithubService githubService;
     private final BotService botService;
     private final LinkService linkService;
@@ -26,7 +29,7 @@ public class RepositoryBranch extends AbstractGithubSource {
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return regex;
     }
 
     @Override

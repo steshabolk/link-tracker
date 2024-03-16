@@ -1,10 +1,13 @@
 package edu.java.bot.handler;
 
 import com.pengrad.telegrambot.model.Chat;
+import com.pengrad.telegrambot.model.ChatMember;
+import com.pengrad.telegrambot.model.ChatMemberUpdated;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
+import edu.java.bot.service.ScrapperService;
 import edu.java.bot.telegram.command.Command;
 import edu.java.bot.telegram.command.HelpCommand;
 import edu.java.bot.telegram.command.ListCommand;
@@ -23,12 +26,17 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class MessageHandlerTest {
 
     private MessageHandler messageHandler;
+    @Mock
+    private ScrapperService scrapperService;
+    @Mock
+    private ClientExceptionHandler clientExceptionHandler;
     @Mock
     private HelpCommand helpCommand;
     @Mock
@@ -47,28 +55,31 @@ class MessageHandlerTest {
     private Chat chat;
     @Mock
     private SendMessage sendMessage;
+    @Mock
+    private ChatMemberUpdated chatMemberUpdated;
+    @Mock
+    private ChatMember chatMember;
 
     @BeforeEach
     void init() {
         List<Command> commands = List.of(helpCommand, listCommand, startCommand, trackCommand, untrackCommand);
-        messageHandler = new MessageHandler(commands);
+        messageHandler = new MessageHandler(commands, scrapperService, clientExceptionHandler);
         doReturn(false).when(helpCommand).isTriggered(update);
         doReturn(false).when(listCommand).isTriggered(update);
         doReturn(false).when(trackCommand).isTriggered(update);
         doReturn(false).when(untrackCommand).isTriggered(update);
+        doReturn(true).when(startCommand).isTriggered(update);
+        doReturn(message).when(update).message();
+        doReturn("/start").when(message).text();
+        doReturn(chat).when(message).chat();
+        doReturn(1L).when(chat).id();
     }
 
     @Nested
-    class HandleTest {
+    class HandleCommandTest {
 
         @Test
         void shouldReturnCommandReplyWhenOneCommandIsTriggerred() {
-            doReturn(message).when(update).message();
-            doReturn("/start").when(message).text();
-            doReturn(chat).when(message).chat();
-            doReturn(1L).when(chat).id();
-
-            doReturn(true).when(startCommand).isTriggered(update);
             doReturn(sendMessage).when(startCommand).handle(update);
 
             SendMessage actual = messageHandler.handle(update);
@@ -80,12 +91,7 @@ class MessageHandlerTest {
         void shouldReturnUnknownReplyWhenNoCommandIsTriggerred() {
             String expectedReply = EmojiParser.parseToUnicode(
                 ":heavy_multiplication_x: sorry, unable to process an unknown command\n"
-                    + "◉ */help* ➜ show commands");
-
-            doReturn(message).when(update).message();
-            doReturn("/dummy").when(message).text();
-            doReturn(chat).when(message).chat();
-            doReturn(1L).when(chat).id();
+                    + "➜ */help* - show commands");
 
             doReturn(false).when(startCommand).isTriggered(update);
 
@@ -98,19 +104,18 @@ class MessageHandlerTest {
         }
 
         @Test
-        void shouldReturnNullWhenMessageIsNull() {
-            SendMessage actual = messageHandler.handle(update);
-
-            assertThat(actual).isNull();
-        }
-
-        @Test
-        void shouldReturnNullWhenMessageTextIsNull() {
+        void shouldDeleteChatWhenBotIsBlocked() {
             doReturn(message).when(update).message();
+            doReturn(null).when(message).text();
+            doReturn(chatMemberUpdated).when(update).myChatMember();
+            doReturn(chat).when(chatMemberUpdated).chat();
+            doReturn(chatMember).when(chatMemberUpdated).newChatMember();
+            doReturn(ChatMember.Status.kicked).when(chatMember).status();
 
             SendMessage actual = messageHandler.handle(update);
 
             assertThat(actual).isNull();
+            verify(scrapperService).deleteChat(1L);
         }
     }
 }

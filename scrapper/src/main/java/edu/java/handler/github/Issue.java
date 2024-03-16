@@ -4,12 +4,14 @@ import edu.java.entity.Link;
 import edu.java.service.BotService;
 import edu.java.service.GithubService;
 import edu.java.service.LinkService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class Issue extends AbstractGithubSource {
 
-    private static final String URL_PATH = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/issues/(?<num>\\d+)";
+    @Value("${app.source-regex.github.issue}")
+    private String regex;
 
     public Issue(GithubService githubService, BotService botService, LinkService linkService) {
         super(githubService, botService, linkService);
@@ -17,7 +19,7 @@ public class Issue extends AbstractGithubSource {
 
     @Override
     public String urlPath() {
-        return URL_PATH;
+        return regex;
     }
 
     @Override

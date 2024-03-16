@@ -11,8 +11,8 @@ public interface BotListener extends UpdatesListener {
 
     TelegramBot telegramBot();
 
-    default <T extends BaseRequest<T, R>, R extends BaseResponse> void execute(BaseRequest<T, R> request) {
-        telegramBot().execute(request);
+    default <T extends BaseRequest<T, R>, R extends BaseResponse> R execute(BaseRequest<T, R> request) {
+        return telegramBot().execute(request);
     }
 
     @Override
