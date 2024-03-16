@@ -6,8 +6,8 @@ import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.exception.ApiExceptionType;
-import edu.java.repository.jdbc.JdbcChatLinkRepository;
-import edu.java.repository.jdbc.JdbcLinkRepository;
+import edu.java.repository.ChatLinkRepository;
+import edu.java.repository.LinkRepository;
 import edu.java.service.LinkService;
 import edu.java.util.LinkParser;
 import java.net.URI;
@@ -23,8 +23,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JdbcLinkService implements LinkService {
 
-    private final JdbcLinkRepository linkRepository;
-    private final JdbcChatLinkRepository chatLinkRepository;
+    private final LinkRepository linkRepository;
+    private final ChatLinkRepository chatLinkRepository;
     private final JdbcChatService chatService;
 
     @Override

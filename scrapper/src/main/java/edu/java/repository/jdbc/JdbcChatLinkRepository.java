@@ -6,10 +6,8 @@ import edu.java.repository.ChatLinkRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
-@Repository
 public class JdbcChatLinkRepository implements ChatLinkRepository {
 
     private static final String IS_LINK_ADDED_TO_CHAT = """

@@ -6,10 +6,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
-@Repository
 public class JdbcChatRepository implements ChatRepository {
 
     private static final String SAVE_CHAT = """
