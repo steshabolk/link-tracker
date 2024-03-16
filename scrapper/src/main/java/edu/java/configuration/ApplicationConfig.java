@@ -3,6 +3,7 @@ package edu.java.configuration;
 import edu.java.enums.LinkType;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -13,6 +14,9 @@ import org.springframework.validation.annotation.Validated;
 @EnableScheduling
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
 public record ApplicationConfig(
+    @NotNull
+    String databaseAccessType,
+    Map<String, List<String>> databaseAccessTypeBeans,
     @NotNull
     Integer linkAge,
     @NotNull

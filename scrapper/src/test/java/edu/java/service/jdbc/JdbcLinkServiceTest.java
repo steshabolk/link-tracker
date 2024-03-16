@@ -7,8 +7,8 @@ import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
 import edu.java.exception.ApiException;
-import edu.java.repository.jdbc.JdbcChatLinkRepository;
-import edu.java.repository.jdbc.JdbcLinkRepository;
+import edu.java.repository.ChatLinkRepository;
+import edu.java.repository.LinkRepository;
 import edu.java.util.LinkParser;
 import java.net.URI;
 import java.time.LocalDate;
@@ -45,9 +45,9 @@ class JdbcLinkServiceTest {
     @InjectMocks
     private JdbcLinkService linkService;
     @Mock
-    private JdbcLinkRepository linkRepository;
+    private LinkRepository linkRepository;
     @Mock
-    private JdbcChatLinkRepository chatLinkRepository;
+    private ChatLinkRepository chatLinkRepository;
     @Mock
     private JdbcChatService chatService;
     static MockedStatic<LinkParser> linkParserMock;
