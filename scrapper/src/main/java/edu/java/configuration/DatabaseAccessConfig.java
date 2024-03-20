@@ -2,6 +2,8 @@ package edu.java.configuration;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.AnyNestedCondition;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,5 +27,27 @@ public class DatabaseAccessConfig {
         private void init() {
             log.info("database access: jooq");
         }
+    }
+
+    @Configuration
+    @ConditionalOnProperty(prefix = "app", name = "database-access-type", havingValue = "jpa")
+    public static class JpaAccessConfig {
+        @PostConstruct
+        private void init() {
+            log.info("database access: jpa");
+        }
+    }
+
+    public static class JdbcOrJooqAccessConfig extends AnyNestedCondition {
+
+        public JdbcOrJooqAccessConfig() {
+            super(ConfigurationPhase.REGISTER_BEAN);
+        }
+
+        @ConditionalOnBean(JdbcAccessConfig.class)
+        private static class JdbcCondition {}
+
+        @ConditionalOnBean(JooqAccessConfig.class)
+        private static class JooqCondition {}
     }
 }
