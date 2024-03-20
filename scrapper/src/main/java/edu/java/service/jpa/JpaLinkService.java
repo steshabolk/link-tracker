@@ -1,4 +1,4 @@
-package edu.java.service.jdbc;
+package edu.java.service.jpa;
 
 import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.dto.response.LinkResponse;
@@ -7,8 +7,7 @@ import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.exception.ApiExceptionType;
-import edu.java.repository.ChatLinkRepository;
-import edu.java.repository.LinkRepository;
+import edu.java.repository.jpa.JpaLinkRepository;
 import edu.java.service.LinkService;
 import edu.java.util.LinkParser;
 import java.net.URI;
@@ -16,26 +15,26 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
-@Conditional(DatabaseAccessConfig.JdbcOrJooqAccessConfig.class)
+@ConditionalOnBean(DatabaseAccessConfig.JpaAccessConfig.class)
 @Service
-public class JdbcLinkService implements LinkService {
+public class JpaLinkService implements LinkService {
 
-    private final LinkRepository linkRepository;
-    private final ChatLinkRepository chatLinkRepository;
-    private final JdbcChatService chatService;
+    private final JpaLinkRepository linkRepository;
+    private final JpaChatService chatService;
 
     @Override
     public List<Link> getLinksToUpdate(Integer minutes, Integer limit) {
         return linkRepository.findAllWithStatusAndOlderThan(
             LinkStatus.ACTIVE,
             OffsetDateTime.now().minusMinutes(minutes),
-            limit
+            PageRequest.of(0, limit)
         );
     }
 
@@ -43,14 +42,14 @@ public class JdbcLinkService implements LinkService {
     @Override
     public void updateLinkStatus(Link link, LinkStatus status) {
         log.debug("link{id={}} status was changed to {}", link.getId(), status.name());
-        linkRepository.updateStatus(link, status);
+        link.setStatus(status);
     }
 
     @Transactional
     @Override
     public void updateCheckedAt(Link link, OffsetDateTime checkedAt) {
         log.debug("link{id={}} was updated at {}", link.getId(), checkedAt);
-        linkRepository.updateCheckedAt(link, checkedAt);
+        link.setCheckedAt(checkedAt);
     }
 
     @Transactional
@@ -59,7 +58,7 @@ public class JdbcLinkService implements LinkService {
         Link parsedLink = LinkParser.parseLink(url);
         Chat chat = chatService.findByChatId(chatId);
         Link link = processLinkForAdding(parsedLink, chat);
-        chatLinkRepository.addLinkToChat(chat, link);
+        chat.addLink(link);
         log.debug("add link{id={}} to chat{id={}}", link.getId(), chat.getId());
         return new LinkResponse(link.getId(), URI.create(link.getUrl()));
     }
@@ -70,41 +69,32 @@ public class JdbcLinkService implements LinkService {
         Link parsedLink = LinkParser.parseLink(url);
         Chat chat = chatService.findByChatId(chatId);
         Link link = processLinkForDeletion(parsedLink, chat);
-        chatLinkRepository.removeLinkFromChat(chat, link);
+        chat.removeLink(link);
         log.debug("remove link{id={}} from chat{id={}}", link.getId(), chat.getId());
         return new LinkResponse(link.getId(), URI.create(link.getUrl()));
     }
 
     @Override
     public ListLinksResponse getChatLinks(Long chatId) {
-        Chat chat = chatService.findByChatId(chatId);
-        List<LinkResponse> trackedLinks =
-            linkRepository.findAllByChat(chat).stream()
-                .map(link -> new LinkResponse(link.getId(), URI.create(link.getUrl())))
-                .toList();
+        List<LinkResponse> trackedLinks = chatService.findByChatId(chatId)
+            .getLinks().stream()
+            .map(link -> new LinkResponse(link.getId(), URI.create(link.getUrl())))
+            .toList();
         return new ListLinksResponse(trackedLinks, trackedLinks.size());
     }
 
     private Link processLinkForAdding(Link parsedLink, Chat chat) {
-        return linkRepository.findByUrl(parsedLink.getUrl())
-            .filter(it -> canLinkBeAdded(it, chat))
-            .orElseGet(() -> {
-                Link saved = linkRepository.save(parsedLink);
-                log.debug("new link{id={}} was saved", saved.getId());
-                return saved;
+        chat.findLinkByUrl(parsedLink.getUrl())
+            .ifPresent(it -> {
+                throw ApiExceptionType.LINK_ALREADY_EXISTS.toException(it.getUrl());
             });
+        return linkRepository
+            .findByUrl(parsedLink.getUrl())
+            .orElseGet(() -> linkRepository.save(parsedLink));
     }
 
     private Link processLinkForDeletion(Link parsedLink, Chat chat) {
-        return linkRepository.findByUrl(parsedLink.getUrl())
-            .filter(it -> chatLinkRepository.isLinkAddedToChat(chat, it))
+        return chat.findLinkByUrl(parsedLink.getUrl())
             .orElseThrow(() -> ApiExceptionType.LINK_NOT_FOUND.toException(parsedLink.getUrl()));
-    }
-
-    private boolean canLinkBeAdded(Link link, Chat chat) {
-        if (chatLinkRepository.isLinkAddedToChat(chat, link)) {
-            throw ApiExceptionType.LINK_ALREADY_EXISTS.toException(link.getUrl());
-        }
-        return true;
     }
 }

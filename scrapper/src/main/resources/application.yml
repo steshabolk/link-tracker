@@ -1,5 +1,5 @@
 app:
-  database-access-type: jooq
+  database-access-type: jpa
   link-age: 120
   link-updater-scheduler:
     enable: true
