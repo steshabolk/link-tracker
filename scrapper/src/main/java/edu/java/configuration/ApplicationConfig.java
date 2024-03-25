@@ -14,6 +14,8 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
 public record ApplicationConfig(
     @NotNull
+    Integer linkAge,
+    @NotNull
     LinkUpdaterScheduler linkUpdaterScheduler,
     @NotNull
     GithubClient githubClient,

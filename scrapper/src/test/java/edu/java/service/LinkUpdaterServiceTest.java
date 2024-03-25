@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -58,7 +60,7 @@ class LinkUpdaterServiceTest {
                 .url("https://github.com/JetBrains/kotlin")
                 .checkedAt(CHECKED_AT)
                 .build();
-            doReturn(List.of(link)).when(linkService).getActiveLinks();
+            doReturn(List.of(link)).when(linkService).getLinksToUpdate(any(), anyInt());
 
             linkUpdaterService.updateLinks();
 
@@ -74,7 +76,7 @@ class LinkUpdaterServiceTest {
                 .url("https://stackoverflow.com/questions/24840667")
                 .checkedAt(CHECKED_AT)
                 .build();
-            doReturn(List.of(link)).when(linkService).getActiveLinks();
+            doReturn(List.of(link)).when(linkService).getLinksToUpdate(any(), anyInt());
 
             linkUpdaterService.updateLinks();
 
@@ -90,7 +92,7 @@ class LinkUpdaterServiceTest {
                 .url("dummy")
                 .checkedAt(CHECKED_AT)
                 .build();
-            doReturn(List.of(link)).when(linkService).getActiveLinks();
+            doReturn(List.of(link)).when(linkService).getLinksToUpdate(any(), anyInt());
 
             linkUpdaterService.updateLinks();
 

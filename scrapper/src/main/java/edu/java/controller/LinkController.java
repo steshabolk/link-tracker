@@ -5,7 +5,6 @@ import edu.java.dto.request.RemoveLinkRequest;
 import edu.java.dto.response.LinkResponse;
 import edu.java.dto.response.ListLinksResponse;
 import edu.java.exception.ApiErrorResponse;
-import edu.java.service.ChatService;
 import edu.java.service.LinkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -34,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class LinkController {
 
     private final LinkService linkService;
-    private final ChatService chatService;
 
     @Operation(summary = "get all tracked links")
     @ApiResponses(value = {
@@ -47,7 +45,7 @@ public class LinkController {
     })
     @GetMapping
     public ListLinksResponse getLinks(@RequestHeader("Tg-Chat-Id") @NotNull @Positive Long chatId) {
-        return chatService.getLinks(chatId);
+        return linkService.getChatLinks(chatId);
     }
 
     @Operation(summary = "add a tracking link")
@@ -66,7 +64,7 @@ public class LinkController {
         @RequestHeader("Tg-Chat-Id") @NotNull @Positive Long chatId,
         @RequestBody @Valid AddLinkRequest linkRequest
     ) {
-        return linkService.addLink(chatId, linkRequest.link());
+        return linkService.addLinkToChat(chatId, linkRequest.link());
     }
 
     @Operation(summary = "remove a tracked link")
@@ -83,6 +81,6 @@ public class LinkController {
         @RequestHeader("Tg-Chat-Id") @NotNull @Positive Long chatId,
         @RequestBody @Valid RemoveLinkRequest linkRequest
     ) {
-        return linkService.removeLink(chatId, linkRequest.link());
+        return linkService.removeLinkFromChat(chatId, linkRequest.link());
     }
 }
