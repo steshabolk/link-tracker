@@ -13,11 +13,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class LinkUpdaterService {
 
-    private final LinkService linkService;
-    private final List<LinkUpdateHandler> linkUpdateHandlers;
     private static final Integer BATCH_SIZE = 50;
     @Value("${app.link-age}")
     private Integer linkAgeInMinutes;
+    private final LinkService linkService;
+    private final List<LinkUpdateHandler> linkUpdateHandlers;
 
     public void updateLinks() {
         linkService.getLinksToUpdate(linkAgeInMinutes, BATCH_SIZE).forEach(link -> {

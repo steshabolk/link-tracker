@@ -2,7 +2,6 @@ package edu.java.repository.jdbc;
 
 import edu.java.entity.Chat;
 import edu.java.repository.ChatRepository;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -44,11 +43,8 @@ public class JdbcChatRepository implements ChatRepository {
     }
 
     @Override
-    public Chat findByChatId(Long chatId) {
-        List<Chat> chats = jdbcTemplate.query(FIND_CHAT_BY_CHAT_ID, CHAT_ROW_MAPPER, chatId);
-        return chats.stream()
-            .findFirst()
-            .orElse(null);
+    public Optional<Chat> findByChatId(Long chatId) {
+        return jdbcTemplate.queryForStream(FIND_CHAT_BY_CHAT_ID, CHAT_ROW_MAPPER, chatId).findFirst();
     }
 
     @Override

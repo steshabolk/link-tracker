@@ -11,6 +11,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,11 +62,11 @@ class JdbcChatRepositoryTest extends IntegrationTest {
         @Transactional
         @Rollback
         void shouldReturnChat() {
-            Chat chat = chatRepository.findByChatId(CHAT.getChatId());
+            Optional<Chat> chat = chatRepository.findByChatId(CHAT.getChatId());
 
-            assertThat(chat).isNotNull();
-            assertThat(chat.getId()).isEqualTo(1);
-            assertThat(chat.getChatId()).isEqualTo(123);
+            assertThat(chat).isPresent();
+            assertThat(chat.get().getId()).isEqualTo(1);
+            assertThat(chat.get().getChatId()).isEqualTo(123);
         }
     }
 

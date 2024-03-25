@@ -6,12 +6,15 @@ import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
 import edu.java.integration.IntegrationTest;
 import edu.java.integration.config.JdbcTestConfig;
+import edu.java.repository.jdbc.mapper.LinkMapper;
+import edu.java.repository.jdbc.mapper.LinkWithChatsResultSetExtractor;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(classes = {JdbcLinkRepository.class})
+@SpringBootTest(classes = {JdbcLinkRepository.class, LinkMapper.class, LinkWithChatsResultSetExtractor.class})
 @ContextConfiguration(classes = {JdbcTestConfig.class})
 class JdbcLinkRepositoryTest extends IntegrationTest {
 
@@ -96,19 +99,19 @@ class JdbcLinkRepositoryTest extends IntegrationTest {
         @Transactional
         @Rollback
         void shouldReturnLink() {
-            Link link = linkRepository.findByUrl("https://github.com/JetBrains/kotlin");
+            Optional<Link> link = linkRepository.findByUrl("https://github.com/JetBrains/kotlin");
 
-            assertThat(link).isNotNull();
-            assertThat(link.getId()).isEqualTo(1);
-            assertThat(link.getLinkType()).isEqualTo(LinkType.GITHUB);
+            assertThat(link).isPresent();
+            assertThat(link.get().getId()).isEqualTo(1);
+            assertThat(link.get().getLinkType()).isEqualTo(LinkType.GITHUB);
         }
 
         @Test
         @Transactional
         void shouldReturnNullWhenLinkDoesNotExists() {
-            Link link = linkRepository.findByUrl("https://github.com/JetBrains/kotlin");
+            Optional<Link> link = linkRepository.findByUrl("https://github.com/JetBrains/kotlin");
 
-            assertThat(link).isNull();
+            assertThat(link).isEmpty();
         }
     }
 
@@ -124,10 +127,11 @@ class JdbcLinkRepositoryTest extends IntegrationTest {
 
             assertTrue(isUpdated);
 
-            Link link = linkRepository.findByUrl(LINK.getUrl());
+            Optional<Link> link = linkRepository.findByUrl(LINK.getUrl());
 
-            assertThat(link.getId()).isEqualTo(1);
-            assertThat(link.getStatus()).isEqualTo(LinkStatus.BROKEN);
+            assertThat(link).isPresent();
+            assertThat(link.get().getId()).isEqualTo(1);
+            assertThat(link.get().getStatus()).isEqualTo(LinkStatus.BROKEN);
         }
     }
 
@@ -143,10 +147,11 @@ class JdbcLinkRepositoryTest extends IntegrationTest {
 
             assertTrue(isUpdated);
 
-            Link link = linkRepository.findByUrl(LINK.getUrl());
+            Optional<Link> link = linkRepository.findByUrl(LINK.getUrl());
 
-            assertThat(link.getId()).isEqualTo(1);
-            assertThat(link.getCheckedAt()).isEqualTo(CHECKED_AT.plusHours(1));
+            assertThat(link).isPresent();
+            assertThat(link.get().getId()).isEqualTo(1);
+            assertThat(link.get().getCheckedAt()).isEqualTo(CHECKED_AT.plusHours(1));
         }
     }
 

@@ -4,7 +4,6 @@ import edu.java.entity.Chat;
 import edu.java.exception.ApiExceptionType;
 import edu.java.repository.jdbc.JdbcChatRepository;
 import edu.java.service.ChatService;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,10 +16,9 @@ public class JdbcChatService implements ChatService {
 
     private final JdbcChatRepository chatRepository;
 
-    @Transactional(readOnly = true)
     @Override
     public Chat findByChatId(Long chatId) {
-        return Optional.ofNullable(chatRepository.findByChatId(chatId))
+        return chatRepository.findByChatId(chatId)
             .orElseThrow(() -> ApiExceptionType.CHAT_NOT_FOUND.toException(chatId));
     }
 

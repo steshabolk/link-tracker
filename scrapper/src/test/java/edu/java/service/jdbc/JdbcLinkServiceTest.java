@@ -16,6 +16,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -104,7 +105,7 @@ class JdbcLinkServiceTest {
         @Test
         void addAnExistingLinkInDbTest() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(LINK).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.of(LINK)).when(linkRepository).findByUrl(anyString());
             doReturn(false).when(chatLinkRepository).isLinkAddedToChat(any(Chat.class), any(Link.class));
 
             LinkResponse response =
@@ -120,7 +121,7 @@ class JdbcLinkServiceTest {
         @Test
         void addNewLinkTest() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(null).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.empty()).when(linkRepository).findByUrl(anyString());
             doReturn(LINK).when(linkRepository).save(any(Link.class));
 
             LinkResponse response =
@@ -137,7 +138,7 @@ class JdbcLinkServiceTest {
         @Test
         void shouldThrowExceptionWhenLinkExists() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(LINK).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.of(LINK)).when(linkRepository).findByUrl(anyString());
             doReturn(true).when(chatLinkRepository).isLinkAddedToChat(any(Chat.class), any(Link.class));
 
             ApiException ex = catchThrowableOfType(
@@ -158,7 +159,7 @@ class JdbcLinkServiceTest {
         @Test
         void removeLinkTest() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(LINK).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.of(LINK)).when(linkRepository).findByUrl(anyString());
             doReturn(true).when(chatLinkRepository).isLinkAddedToChat(any(Chat.class), any(Link.class));
 
             LinkResponse response =
@@ -173,7 +174,7 @@ class JdbcLinkServiceTest {
         @Test
         void shouldThrowExceptionWhenLinkDoesNotExists() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(null).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.empty()).when(linkRepository).findByUrl(anyString());
 
             ApiException ex = catchThrowableOfType(
                 () -> linkService.removeLinkFromChat(123L, URI.create("https://github.com/JetBrains/kotlin")),
@@ -189,7 +190,7 @@ class JdbcLinkServiceTest {
         @Test
         void shouldThrowExceptionWhenLinkNotAdded() {
             doReturn(CHAT).when(chatService).findByChatId(anyLong());
-            doReturn(LINK).when(linkRepository).findByUrl(anyString());
+            doReturn(Optional.of(LINK)).when(linkRepository).findByUrl(anyString());
             doReturn(false).when(chatLinkRepository).isLinkAddedToChat(any(Chat.class), any(Link.class));
 
             ApiException ex = catchThrowableOfType(

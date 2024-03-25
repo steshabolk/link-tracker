@@ -13,7 +13,6 @@ import edu.java.util.LinkParser;
 import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,6 @@ public class JdbcLinkService implements LinkService {
     private final JdbcChatLinkRepository chatLinkRepository;
     private final JdbcChatService chatService;
 
-    @Transactional(readOnly = true)
     @Override
     public List<Link> getLinksToUpdate(Integer minutes, Integer limit) {
         return linkRepository.findAllWithStatusAndOlderThan(
@@ -74,7 +72,6 @@ public class JdbcLinkService implements LinkService {
         return new LinkResponse(link.getId(), URI.create(link.getUrl()));
     }
 
-    @Transactional(readOnly = true)
     @Override
     public ListLinksResponse getChatLinks(Long chatId) {
         Chat chat = chatService.findByChatId(chatId);
@@ -86,7 +83,7 @@ public class JdbcLinkService implements LinkService {
     }
 
     private Link processLinkForAdding(Link parsedLink, Chat chat) {
-        return Optional.ofNullable(linkRepository.findByUrl(parsedLink.getUrl()))
+        return linkRepository.findByUrl(parsedLink.getUrl())
             .filter(it -> canLinkBeAdded(it, chat))
             .orElseGet(() -> {
                 Link saved = linkRepository.save(parsedLink);
@@ -96,7 +93,7 @@ public class JdbcLinkService implements LinkService {
     }
 
     private Link processLinkForDeletion(Link parsedLink, Chat chat) {
-        return Optional.ofNullable(linkRepository.findByUrl(parsedLink.getUrl()))
+        return linkRepository.findByUrl(parsedLink.getUrl())
             .filter(it -> chatLinkRepository.isLinkAddedToChat(chat, it))
             .orElseThrow(() -> ApiExceptionType.LINK_NOT_FOUND.toException(parsedLink.getUrl()));
     }

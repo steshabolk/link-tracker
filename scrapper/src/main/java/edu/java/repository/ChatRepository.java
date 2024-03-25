@@ -1,6 +1,7 @@
 package edu.java.repository;
 
 import edu.java.entity.Chat;
+import java.util.Optional;
 
 public interface ChatRepository {
 
@@ -8,7 +9,7 @@ public interface ChatRepository {
 
     boolean delete(Long chatId);
 
-    Chat findByChatId(Long chatId);
+    Optional<Chat> findByChatId(Long chatId);
 
     boolean existsByChatId(Long chatId);
 }

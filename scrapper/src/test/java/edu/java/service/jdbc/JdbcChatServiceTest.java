@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +33,7 @@ class JdbcChatServiceTest {
 
         @Test
         void shouldReturnChatWhenChatExists() {
-            doReturn(CHAT).when(chatRepository).findByChatId(anyLong());
+            doReturn(Optional.of(CHAT)).when(chatRepository).findByChatId(anyLong());
 
             Chat chat = chatService.findByChatId(123L);
 
@@ -42,7 +43,7 @@ class JdbcChatServiceTest {
 
         @Test
         void shouldThrowExceptionWhenChatNotFound() {
-            doReturn(null).when(chatRepository).findByChatId(anyLong());
+            doReturn(Optional.empty()).when(chatRepository).findByChatId(anyLong());
 
             ApiException ex = catchThrowableOfType(
                 () -> chatService.findByChatId(123L),
