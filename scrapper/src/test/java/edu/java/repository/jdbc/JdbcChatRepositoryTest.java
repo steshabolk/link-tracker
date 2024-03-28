@@ -1,23 +1,26 @@
 package edu.java.repository.jdbc;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.integration.IntegrationTest;
 import edu.java.integration.config.JdbcTestConfig;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {JdbcChatRepository.class})
-@ContextConfiguration(classes = {JdbcTestConfig.class})
+@ContextConfiguration(classes = {JdbcTestConfig.class, DatabaseAccessConfig.JdbcAccessConfig.class})
+@TestPropertySource(properties = {"app.database-access-type=jdbc"})
 class JdbcChatRepositoryTest extends IntegrationTest {
 
     @Autowired

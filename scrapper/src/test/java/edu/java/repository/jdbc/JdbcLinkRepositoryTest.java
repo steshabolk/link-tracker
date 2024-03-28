@@ -1,5 +1,6 @@
 package edu.java.repository.jdbc;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
@@ -22,13 +23,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = {JdbcLinkRepository.class, LinkMapper.class, LinkWithChatsResultSetExtractor.class})
-@ContextConfiguration(classes = {JdbcTestConfig.class})
+@ContextConfiguration(classes = {JdbcTestConfig.class, DatabaseAccessConfig.JdbcAccessConfig.class})
+@TestPropertySource(properties = {"app.database-access-type=jdbc"})
 class JdbcLinkRepositoryTest extends IntegrationTest {
 
     @Autowired

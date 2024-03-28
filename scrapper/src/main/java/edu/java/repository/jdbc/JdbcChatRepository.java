@@ -1,13 +1,18 @@
 package edu.java.repository.jdbc;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.repository.ChatRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
+@ConditionalOnBean(DatabaseAccessConfig.JdbcAccessConfig.class)
+@Repository
 public class JdbcChatRepository implements ChatRepository {
 
     private static final String SAVE_CHAT = """
