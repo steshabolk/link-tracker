@@ -2,7 +2,7 @@ package edu.java.service.jdbc;
 
 import edu.java.entity.Chat;
 import edu.java.exception.ApiException;
-import edu.java.repository.jdbc.JdbcChatRepository;
+import edu.java.repository.ChatRepository;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ class JdbcChatServiceTest {
     @InjectMocks
     private JdbcChatService chatService;
     @Mock
-    private JdbcChatRepository chatRepository;
+    private ChatRepository chatRepository;
 
     private static final Chat CHAT = Chat.builder().id(1L).chatId(123L).build();
 

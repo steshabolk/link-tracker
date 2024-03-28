@@ -1,14 +1,14 @@
-package edu.java.repository.jdbc;
+package edu.java.repository.jooq;
 
 import edu.java.configuration.DatabaseAccessConfig;
+import edu.java.configuration.JooqConfig;
 import edu.java.entity.Chat;
 import edu.java.integration.IntegrationTest;
-import edu.java.integration.config.JdbcTestConfig;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -17,14 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-@SpringBootTest(classes = {JdbcChatRepository.class})
-@ContextConfiguration(classes = {JdbcTestConfig.class, DatabaseAccessConfig.JdbcAccessConfig.class})
-@TestPropertySource(properties = {"app.database-access-type=jdbc"})
-class JdbcChatRepositoryTest extends IntegrationTest {
+@JooqTest
+@ContextConfiguration(classes = {JooqChatRepository.class, JooqConfig.class, DatabaseAccessConfig.JooqAccessConfig.class})
+@TestPropertySource(properties = {"app.database-access-type=jooq"})
+class JooqChatRepositoryTest extends IntegrationTest {
 
     @Autowired
-    private JdbcChatRepository chatRepository;
+    private JooqChatRepository chatRepository;
 
     private static final Chat CHAT = Chat.builder().chatId(123L).build();
 

@@ -2,7 +2,7 @@ package edu.java.service.jdbc;
 
 import edu.java.entity.Chat;
 import edu.java.exception.ApiExceptionType;
-import edu.java.repository.jdbc.JdbcChatRepository;
+import edu.java.repository.ChatRepository;
 import edu.java.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JdbcChatService implements ChatService {
 
-    private final JdbcChatRepository chatRepository;
+    private final ChatRepository chatRepository;
 
     @Override
     public Chat findByChatId(Long chatId) {
