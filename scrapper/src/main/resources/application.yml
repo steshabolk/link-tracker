@@ -1,14 +1,5 @@
 app:
   database-access-type: jooq
-  database-access-type-beans:
-    jdbc:
-      - edu.java.repository.jdbc.JdbcChatLinkRepository
-      - edu.java.repository.jdbc.JdbcChatRepository
-      - edu.java.repository.jdbc.JdbcLinkRepository
-    jooq:
-      - edu.java.repository.jooq.JooqChatLinkRepository
-      - edu.java.repository.jooq.JooqChatRepository
-      - edu.java.repository.jooq.JooqLinkRepository
   link-age: 120
   link-updater-scheduler:
     enable: true

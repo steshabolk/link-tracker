@@ -1,13 +1,18 @@
 package edu.java.repository.jooq;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.repository.ChatLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.stereotype.Repository;
 import static edu.java.model.jooq.Tables.CHATS_LINKS;
 
 @RequiredArgsConstructor
+@ConditionalOnBean(DatabaseAccessConfig.JooqAccessConfig.class)
+@Repository
 public class JooqChatLinkRepository implements ChatLinkRepository {
 
     private final DSLContext context;

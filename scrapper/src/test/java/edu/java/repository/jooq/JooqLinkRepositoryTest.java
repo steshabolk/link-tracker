@@ -1,10 +1,12 @@
 package edu.java.repository.jooq;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.configuration.JooqConfig;
 import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
+import edu.java.integration.IntegrationTest;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -13,20 +15,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import edu.java.integration.IntegrationTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @JooqTest
-@ContextConfiguration(classes = {JooqLinkRepository.class, JooqConfig.class})
+@ContextConfiguration(classes = {JooqLinkRepository.class, JooqConfig.class, DatabaseAccessConfig.JooqAccessConfig.class})
+@TestPropertySource(properties = {"app.database-access-type=jooq"})
 class JooqLinkRepositoryTest extends IntegrationTest {
 
     @Autowired

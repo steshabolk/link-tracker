@@ -1,13 +1,18 @@
 package edu.java.repository.jdbc;
 
+import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.repository.ChatLinkRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
+@ConditionalOnBean(DatabaseAccessConfig.JdbcAccessConfig.class)
+@Repository
 public class JdbcChatLinkRepository implements ChatLinkRepository {
 
     private static final String IS_LINK_ADDED_TO_CHAT = """
