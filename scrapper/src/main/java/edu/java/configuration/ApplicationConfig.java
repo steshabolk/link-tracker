@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
 public record ApplicationConfig(
     @NotNull
-    String databaseAccessType,
+    AccessType databaseAccessType,
     Map<String, List<String>> databaseAccessTypeBeans,
     @NotNull
     Integer linkAge,
@@ -39,5 +39,9 @@ public record ApplicationConfig(
     }
 
     public record BotClient(@NotNull String api) {
+    }
+
+    public enum AccessType {
+        JDBC, JOOQ, JPA
     }
 }

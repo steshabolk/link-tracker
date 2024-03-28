@@ -1,27 +1,27 @@
-package edu.java.service.jdbc;
+package edu.java.service.jpa;
 
 import edu.java.configuration.DatabaseAccessConfig;
 import edu.java.entity.Chat;
 import edu.java.exception.ApiExceptionType;
-import edu.java.repository.ChatRepository;
+import edu.java.repository.jpa.JpaChatRepository;
 import edu.java.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
-@Conditional(DatabaseAccessConfig.JdbcOrJooqAccessConfig.class)
+@ConditionalOnBean(DatabaseAccessConfig.JpaAccessConfig.class)
 @Service
-public class JdbcChatService implements ChatService {
+public class JpaChatService implements ChatService {
 
-    private final ChatRepository chatRepository;
+    private final JpaChatRepository chatRepository;
 
     @Override
     public Chat findByChatId(Long chatId) {
-        return chatRepository.findByChatId(chatId)
+        return chatRepository.findWithLinksByChatId(chatId)
             .orElseThrow(() -> ApiExceptionType.CHAT_NOT_FOUND.toException(chatId));
     }
 
@@ -39,10 +39,9 @@ public class JdbcChatService implements ChatService {
     @Transactional
     @Override
     public void deleteChat(Long chatId) {
-        if (!chatRepository.existsByChatId(chatId)) {
-            throw ApiExceptionType.CHAT_NOT_FOUND.toException(chatId);
-        }
-        chatRepository.delete(chatId);
+        Chat chat = chatRepository.findByChatId(chatId)
+            .orElseThrow(() -> ApiExceptionType.CHAT_NOT_FOUND.toException(chatId));
+        chatRepository.delete(chat);
         log.debug("chat{chatId={}} was deleted", chatId);
     }
 }
