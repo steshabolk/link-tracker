@@ -1,6 +1,7 @@
 package edu.java.configuration;
 
 import edu.java.enums.LinkType;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
 import java.util.List;
@@ -32,16 +33,24 @@ public record ApplicationConfig(
     public record LinkUpdaterScheduler(boolean enable, @NotNull Duration interval, @NotNull Duration forceCheckDelay) {
     }
 
-    public record GithubClient(@DefaultValue("https://api.github.com") String api) {
+    public record GithubClient(@DefaultValue("https://api.github.com") String api, RetryConfig retry) {
     }
 
-    public record StackoverflowClient(@DefaultValue("https://api.stackexchange.com/2.3") String api) {
+    public record StackoverflowClient(@DefaultValue("https://api.stackexchange.com/2.3") String api, RetryConfig retry) {
     }
 
-    public record BotClient(@NotNull String api) {
+    public record BotClient(@NotNull String api, RetryConfig retry) {
+    }
+
+    public record RetryConfig(@NotNull RetryStrategy strategy, @NotNull Integer maxAttempts,
+                              @NotNull Duration backoff, Duration maxBackoff, @NotEmpty List<Integer> codes) {
     }
 
     public enum AccessType {
         JDBC, JOOQ, JPA
+    }
+
+    public enum RetryStrategy {
+        FIXED, LINEAR, EXPONENTIAL
     }
 }

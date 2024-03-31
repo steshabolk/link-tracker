@@ -2,6 +2,11 @@ app:
   telegram-token: ${TELEGRAM_TOKEN}
   scrapper-client:
     api: http://localhost:8080
+    retry:
+      strategy: fixed
+      max-attempts: 3
+      backoff: 2000
+      codes: 429, 503, 504
   source-regex:
     github:
         repository: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
@@ -21,6 +26,13 @@ spring:
   messages:
     basename: messages
     encoding: UTF-8
+  cache:
+    cache-names:
+      - rate-limit-buckets
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+    jcache:
+      provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
 
 server:
   port: 8090
@@ -40,3 +52,16 @@ springdoc:
     operations-sorter: method
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+bucket4j:
+  enabled: true
+  filters:
+    - cache-name: rate-limit-buckets
+      url: (/updates.*)
+      http-response-body: "{\"description\":\"429 TOO_MANY_REQUESTS\",\"code\":\"RATE_LIMIT\",\"exceptionName\":\"ApiException\",\"exceptionMessage\":\"Too Many Requests\",\"stacktrace\":[]}"
+      rate-limits:
+        - cache-key: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 50
+              time: 1
+              unit: seconds

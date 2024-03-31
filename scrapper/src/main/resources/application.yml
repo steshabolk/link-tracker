@@ -7,10 +7,27 @@ app:
     force-check-delay: 10000
   github-client:
     api: https://api.github.com
+    retry:
+      strategy: exponential
+      max-attempts: 3
+      backoff: 2000
+      max-backoff: 10000
+      codes: 503, 504
   stackoverflow-client:
     api: https://api.stackexchange.com/2.3
+    retry:
+      strategy: linear
+      max-attempts: 3
+      backoff: 2000
+      max-backoff: 10000
+      codes: 503, 504
   bot-client:
     api: http://localhost:8090
+    retry:
+      strategy: fixed
+      max-attempts: 3
+      backoff: 2000
+      codes: 429, 503, 504
   source-regex:
     github:
       repository: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
@@ -30,6 +47,13 @@ spring:
     driverClassName: org.postgresql.Driver
   liquibase:
     enabled: false
+  cache:
+    cache-names:
+      - rate-limit-buckets
+    caffeine:
+      spec: maximumSize=100000,expireAfterAccess=3600s
+    jcache:
+      provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
 
 server:
   port: 8080
@@ -49,3 +73,16 @@ springdoc:
     operations-sorter: method
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
+
+bucket4j:
+  enabled: true
+  filters:
+    - cache-name: rate-limit-buckets
+      url: (/tg-chat.*)|(/links.*)
+      http-response-body: "{\"description\":\"429 TOO_MANY_REQUESTS\",\"code\":\"RATE_LIMIT\",\"exceptionName\":\"ApiException\",\"exceptionMessage\":\"Too Many Requests\",\"stacktrace\":[]}"
+      rate-limits:
+        - cache-key: "getRemoteAddr()"
+          bandwidths:
+            - capacity: 2
+              time: 1
+              unit: seconds
