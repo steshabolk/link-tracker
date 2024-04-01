@@ -1,14 +1,12 @@
-package edu.java.repository.jdbc;
+package edu.java.repository.jooq;
 
 import edu.java.configuration.DatabaseAccessConfig;
+import edu.java.configuration.JooqConfig;
 import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
 import edu.java.integration.IntegrationTest;
-import edu.java.integration.config.JdbcTestConfig;
-import edu.java.repository.jdbc.mapper.LinkMapper;
-import edu.java.repository.jdbc.mapper.LinkWithChatsResultSetExtractor;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -20,7 +18,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.jooq.JooqTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -29,13 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest(classes = {JdbcLinkRepository.class, LinkMapper.class, LinkWithChatsResultSetExtractor.class})
-@ContextConfiguration(classes = {JdbcTestConfig.class, DatabaseAccessConfig.JdbcAccessConfig.class})
-@TestPropertySource(properties = {"app.database-access-type=jdbc"})
-class JdbcLinkRepositoryTest extends IntegrationTest {
+@JooqTest
+@ContextConfiguration(classes = {JooqLinkRepository.class, JooqConfig.class, DatabaseAccessConfig.JooqAccessConfig.class})
+@TestPropertySource(properties = {"app.database-access-type=jooq"})
+class JooqLinkRepositoryTest extends IntegrationTest {
 
     @Autowired
-    private JdbcLinkRepository linkRepository;
+    private JooqLinkRepository linkRepository;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
         LocalDate.of(2024, 1, 1),
@@ -73,7 +71,7 @@ class JdbcLinkRepositoryTest extends IntegrationTest {
             "/sql/chats-links/add-links-list-to-chat.sql"})
         @Transactional
         @Rollback
-        void shouldReturnLinks() {
+        void shouldReturnChat() {
             List<Link> links = linkRepository.findAllByChat(CHAT);
 
             assertThat(links.size()).isEqualTo(2);
