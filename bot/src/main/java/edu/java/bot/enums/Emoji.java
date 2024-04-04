@@ -1,9 +1,8 @@
 package edu.java.bot.enums;
 
-import lombok.Getter;
+import com.vdurmont.emoji.EmojiParser;
 import lombok.RequiredArgsConstructor;
 
-@Getter
 @RequiredArgsConstructor
 public enum Emoji {
 
@@ -16,4 +15,8 @@ public enum Emoji {
     CHECK(":heavy_check_mark:");
 
     private final String markdown;
+
+    public String toUnicode() {
+        return EmojiParser.parseToUnicode(this.markdown);
+    }
 }

@@ -1,6 +1,5 @@
 package edu.java.bot.configuration;
 
-import edu.java.bot.enums.LinkType;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
@@ -14,11 +13,9 @@ import org.springframework.validation.annotation.Validated;
 public record ApplicationConfig(
     @NotEmpty
     String telegramToken,
-
     @NotNull
     ScrapperClientConfig scrapperClient,
-
-    Map<LinkType, Map<String, String>> sourceRegex
+    Map<String, LinkSource> linkSources
 ) {
 
     public record ScrapperClientConfig(@NotNull String api, RetryConfig retry) {
@@ -26,6 +23,9 @@ public record ApplicationConfig(
 
     public record RetryConfig(@NotNull RetryStrategy strategy, @NotNull Integer maxAttempts,
                               @NotNull Duration backoff, Duration maxBackoff, @NotEmpty List<Integer> codes) {
+    }
+
+    public record LinkSource(@NotNull String domain, Map<String, String> regex) {
     }
 
     public enum RetryStrategy {

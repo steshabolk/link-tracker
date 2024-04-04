@@ -3,8 +3,9 @@ package edu.java.bot.service;
 import com.pengrad.telegrambot.response.SendResponse;
 import edu.java.bot.dto.request.LinkUpdateRequest;
 import edu.java.bot.enums.Emoji;
-import edu.java.bot.listener.BotListenerImpl;
+import edu.java.bot.listener.BotListener;
 import edu.java.bot.util.BotSendMessage;
+import edu.java.bot.util.TextUtil;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class BotService {
 
-    private final BotListenerImpl botListener;
+    private final BotListener botListener;
     private final ScrapperService scrapperService;
 
     public void sendLinkUpdate(LinkUpdateRequest linkUpdate) {
@@ -42,7 +43,6 @@ public class BotService {
     }
 
     private String getUpdateResponse(URI url, String message) {
-        return String.format("%s %s\n%s", Emoji.LINK.getMarkdown(), url, message)
-            .replace("[", "\\[");
+        return String.format("%s %s\n%s", Emoji.LINK.toUnicode(), url, TextUtil.escapeSpecialCharacters(message));
     }
 }

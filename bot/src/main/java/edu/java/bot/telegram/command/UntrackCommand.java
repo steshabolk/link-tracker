@@ -14,13 +14,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class UntrackCommand implements Command, Reply {
 
-    private final CommandType commandType = CommandType.UNTRACK;
     private final LinkHandler linkHandler;
     private final ScrapperService scrapperService;
 
     @Override
     public CommandType commandType() {
-        return commandType;
+        return CommandType.UNTRACK;
     }
 
     @Override

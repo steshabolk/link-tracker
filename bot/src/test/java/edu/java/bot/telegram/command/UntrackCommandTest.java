@@ -107,12 +107,10 @@ class UntrackCommandTest {
 
         @Test
         void shouldReturnFalseWhenCommandIsIncorrectAndItIsNotCommandReply() {
-            String dummyReply = "dummy";
-
             doReturn(message).when(update).message();
             doReturn("/dummy").when(message).text();
             doReturn(reply).when(message).replyToMessage();
-            doReturn(dummyReply).when(reply).text();
+            doReturn("dummy").when(reply).text();
 
             boolean isTriggered = untrackCommand.isTriggered(update);
 

@@ -6,9 +6,8 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
-import edu.java.bot.enums.LinkType;
 import edu.java.bot.service.ScrapperService;
-import edu.java.bot.util.LinkTypeUtil;
+import edu.java.bot.util.LinkSourceUtil;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -39,16 +38,16 @@ class ListCommandTest {
     private Message message;
     @Mock
     private Chat chat;
-    static MockedStatic<LinkTypeUtil> linkTypeUtilMock;
+    private static MockedStatic<LinkSourceUtil> linkSourceUtilMock;
 
     @BeforeAll
     public static void init() {
-        linkTypeUtilMock = mockStatic(LinkTypeUtil.class);
+        linkSourceUtilMock = mockStatic(LinkSourceUtil.class);
     }
 
     @AfterAll
     public static void close() {
-        linkTypeUtilMock.close();
+        linkSourceUtilMock.close();
     }
 
     @Nested
@@ -112,7 +111,7 @@ class ListCommandTest {
         void shouldReturnEmptyListReplyWhenListOfLinksIsEmpty() {
             String expectedReply = EmojiParser.parseToUnicode(
                 ":bookmark_tabs: your list of tracked links is empty\n"
-                    + "➜ */track* - start tracking a link");
+                    + "➜ <b>/track</b> - start tracking a link");
 
             doReturn(List.of()).when(scrapperService).getLinks(1L);
             doReturn(message).when(update).message();
@@ -132,18 +131,18 @@ class ListCommandTest {
             URI stackoverflowUrl = URI.create("https://stackoverflow.com/questions/24840667");
 
             String expectedReply = EmojiParser.parseToUnicode(
-                ":link: *GITHUB*\n"
+                ":link: <b>GITHUB</b>\n"
                     + "➜ https://github.com/JetBrains/kotlin\n"
                     + "\n" +
-                    ":link: *STACKOVERFLOW*\n"
+                    ":link: <b>STACKOVERFLOW</b>\n"
                     + "➜ https://stackoverflow.com/questions/24840667");
 
             doReturn(List.of(githubUrl, stackoverflowUrl)).when(scrapperService).getLinks(1L);
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
-            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("github.com")).thenReturn(Optional.of(LinkType.GITHUB));
-            linkTypeUtilMock.when(() -> LinkTypeUtil.getLinkType("stackoverflow.com")).thenReturn(Optional.of(LinkType.STACKOVERFLOW));
+            linkSourceUtilMock.when(() -> LinkSourceUtil.getLinkType("github.com")).thenReturn(Optional.of("github"));
+            linkSourceUtilMock.when(() -> LinkSourceUtil.getLinkType("stackoverflow.com")).thenReturn(Optional.of("stackoverflow"));
 
             SendMessage sendMessage = listCommand.handle(update);
 

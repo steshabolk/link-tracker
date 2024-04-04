@@ -1,35 +1,21 @@
 package edu.java.bot.util;
 
+import com.vdurmont.emoji.EmojiParser;
+import edu.java.bot.configuration.ApplicationConfig;
 import java.net.URI;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = {LinkSourceUtil.class})
+@EnableConfigurationProperties(value = ApplicationConfig.class)
 class LinkParserTest {
-
-    static MockedStatic<LinkTypeUtil> linkTypeUtilMock;
-
-    @BeforeAll
-    public static void init() {
-        linkTypeUtilMock = mockStatic(LinkTypeUtil.class);
-    }
-
-    @AfterAll
-    public static void close() {
-        linkTypeUtilMock.close();
-    }
 
     @Nested
     class ParseLinkTest {
@@ -37,8 +23,6 @@ class LinkParserTest {
         @ParameterizedTest
         @MethodSource("edu.java.bot.util.LinkParserTest#validLink")
         void shouldReturnLinkWhenLinkIsValid(String url) {
-            linkTypeUtilMock.when(() -> LinkTypeUtil.isSupportedSource(anyString(), anyString())).thenReturn(true);
-
             URI parsedLink = LinkParser.parseLink(url);
 
             assertThat(parsedLink.toString()).isEqualTo(url);
@@ -47,7 +31,8 @@ class LinkParserTest {
         @ParameterizedTest
         @MethodSource("edu.java.bot.util.LinkParserTest#invalidLink")
         void shouldThrowExceptionWhenLinkIsInvalid(String url) {
-            String expected = ":heavy_multiplication_x: your link is invalid. please try again";
+            String expected = EmojiParser.parseToUnicode(
+                ":heavy_multiplication_x: your link is invalid. please try again");
 
             assertThatThrownBy(() -> LinkParser.parseLink(url))
                 .isInstanceOf(RuntimeException.class)
@@ -57,9 +42,8 @@ class LinkParserTest {
         @ParameterizedTest
         @MethodSource("edu.java.bot.util.LinkParserTest#notSupportedLink")
         void shouldThrowExceptionWhenLinkIsNotSupported(String url) {
-            linkTypeUtilMock.when(() -> LinkTypeUtil.isSupportedSource(anyString(), anyString())).thenReturn(false);
-
-            String expected = ":heavy_multiplication_x: sorry, tracking is not supported on this resource";
+            String expected = EmojiParser.parseToUnicode(
+                ":heavy_multiplication_x: sorry, tracking is not supported on this resource");
 
             assertThatThrownBy(() -> LinkParser.parseLink(url))
                 .isInstanceOf(RuntimeException.class)
@@ -73,7 +57,9 @@ class LinkParserTest {
             Arguments.of("https://github.com/JetBrains/kotlin/tree/branch-name"),
             Arguments.of("https://github.com/JetBrains/kotlin/pull/1"),
             Arguments.of("https://github.com/JetBrains/kotlin/issues/1"),
-            Arguments.of("https://stackoverflow.com/questions/24840667")
+            Arguments.of("https://stackoverflow.com/questions/24840667"),
+            Arguments.of("https://stackoverflow.com/q/24840667"),
+            Arguments.of("https://stackoverflow.com/questions/24840667/question-title")
         );
     }
 
