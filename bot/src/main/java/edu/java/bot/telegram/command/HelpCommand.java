@@ -10,11 +10,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class HelpCommand implements Command {
 
-    private final CommandType commandType = CommandType.HELP;
-
     @Override
     public CommandType commandType() {
-        return commandType;
+        return CommandType.HELP;
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.dto.request.LinkUpdateRequest;
-import edu.java.bot.listener.BotListenerImpl;
+import edu.java.bot.listener.BotListener;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ class BotServiceTest {
     @InjectMocks
     private BotService botService;
     @Mock
-    private BotListenerImpl botListener;
+    private BotListener botListener;
     @Mock
     private ScrapperService scrapperService;
     @Mock

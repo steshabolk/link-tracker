@@ -14,13 +14,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class TrackCommand implements Command, Reply {
 
-    private final CommandType commandType = CommandType.TRACK;
     private final LinkHandler linkHandler;
     private final ScrapperService scrapperService;
 
     @Override
     public CommandType commandType() {
-        return commandType;
+        return CommandType.TRACK;
     }
 
     @Override

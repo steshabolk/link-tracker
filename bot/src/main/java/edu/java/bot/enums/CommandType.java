@@ -1,5 +1,6 @@
 package edu.java.bot.enums;
 
+import edu.java.bot.util.TextUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,6 +18,6 @@ public enum CommandType {
     private final String description;
 
     public String getCommandBulletPoint() {
-        return String.format("➜ *%s* - %s", this.getCommand(), this.getDescription());
+        return String.format("➜ %s - %s", TextUtil.toBold(this.getCommand()), this.getDescription());
     }
 }

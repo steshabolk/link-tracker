@@ -13,12 +13,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class StartCommand implements Command {
 
-    private final CommandType commandType = CommandType.START;
     private final ScrapperService scrapperService;
 
     @Override
     public CommandType commandType() {
-        return commandType;
+        return CommandType.START;
     }
 
     @Override

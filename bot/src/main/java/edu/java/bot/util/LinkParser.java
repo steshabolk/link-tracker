@@ -20,7 +20,7 @@ public class LinkParser {
         } catch (RuntimeException ex) {
             throw new RuntimeException(BotReply.INVALID_LINK.getReply());
         }
-        boolean isSupportedSource = LinkTypeUtil.isSupportedSource(link.getHost(), url);
+        boolean isSupportedSource = LinkSourceUtil.isSupportedSource(link.getHost(), url);
         if (!isSupportedSource) {
             throw new RuntimeException(BotReply.NOT_SUPPORTED_SOURCE.getReply());
         }

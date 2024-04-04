@@ -91,7 +91,7 @@ class MessageHandlerTest {
         void shouldReturnUnknownReplyWhenNoCommandIsTriggerred() {
             String expectedReply = EmojiParser.parseToUnicode(
                 ":heavy_multiplication_x: sorry, unable to process an unknown command\n"
-                    + "➜ */help* - show commands");
+                    + "➜ <b>/help</b> - show commands");
 
             doReturn(false).when(startCommand).isTriggered(update);
 

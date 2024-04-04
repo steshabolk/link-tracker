@@ -8,6 +8,8 @@ import edu.java.bot.service.ScrapperService;
 import edu.java.bot.util.LinkParser;
 import java.net.URI;
 import java.util.Map;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,17 @@ class LinkHandlerTest {
     private Chat chat;
     @Captor
     private ArgumentCaptor<URI> linkCaptor;
+    private static MockedStatic<LinkParser> linkParserMock;
+
+    @BeforeAll
+    public static void init() {
+        linkParserMock = mockStatic(LinkParser.class);
+    }
+
+    @AfterAll
+    public static void close() {
+        linkParserMock.close();
+    }
 
     @Nested
     class HandleLinkTest {
@@ -50,19 +63,17 @@ class LinkHandlerTest {
             doReturn(link).when(message).text();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
-            try (MockedStatic<LinkParser> parserMock = mockStatic(LinkParser.class)) {
-                parserMock.when(() -> LinkParser.parseLink(anyString()))
-                    .thenReturn(URI.create("https://github.com/JetBrains/kotlin"));
+            linkParserMock.when(() -> LinkParser.parseLink(anyString()))
+                .thenReturn(URI.create("https://github.com/JetBrains/kotlin"));
 
-                SendMessage sendMessage = linkHandler.handleLink(update, scrapperService::addLink, "success");
+            SendMessage sendMessage = linkHandler.handleLink(update, scrapperService::addLink, "success");
 
-                Map<String, Object> parameters = sendMessage.getParameters();
-                assertThat(parameters.get("chat_id")).isEqualTo(1L);
-                assertThat(parameters.get("text")).isEqualTo("success");
+            Map<String, Object> parameters = sendMessage.getParameters();
+            assertThat(parameters.get("chat_id")).isEqualTo(1L);
+            assertThat(parameters.get("text")).isEqualTo("success");
 
-                verify(scrapperService).addLink(anyLong(), linkCaptor.capture());
-                assertThat(linkCaptor.getValue().toString()).isEqualTo("https://github.com/JetBrains/kotlin");
-            }
+            verify(scrapperService).addLink(anyLong(), linkCaptor.capture());
+            assertThat(linkCaptor.getValue().toString()).isEqualTo("https://github.com/JetBrains/kotlin");
         }
 
         @Test
@@ -72,19 +83,17 @@ class LinkHandlerTest {
             doReturn(link).when(message).text();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();
-            try (MockedStatic<LinkParser> parserMock = mockStatic(LinkParser.class)) {
-                parserMock.when(() -> LinkParser.parseLink(anyString()))
-                    .thenReturn(URI.create("https://stackoverflow.com/questions/24840667"));
+            linkParserMock.when(() -> LinkParser.parseLink(anyString()))
+                .thenReturn(URI.create("https://stackoverflow.com/questions/24840667"));
 
-                SendMessage sendMessage = linkHandler.handleLink(update, scrapperService::removeLink, "success");
+            SendMessage sendMessage = linkHandler.handleLink(update, scrapperService::removeLink, "success");
 
-                Map<String, Object> parameters = sendMessage.getParameters();
-                assertThat(parameters.get("chat_id")).isEqualTo(1L);
-                assertThat(parameters.get("text")).isEqualTo("success");
+            Map<String, Object> parameters = sendMessage.getParameters();
+            assertThat(parameters.get("chat_id")).isEqualTo(1L);
+            assertThat(parameters.get("text")).isEqualTo("success");
 
-                verify(scrapperService).removeLink(anyLong(), linkCaptor.capture());
-                assertThat(linkCaptor.getValue().toString()).isEqualTo("https://stackoverflow.com/questions/24840667");
-            }
+            verify(scrapperService).removeLink(anyLong(), linkCaptor.capture());
+            assertThat(linkCaptor.getValue().toString()).isEqualTo("https://stackoverflow.com/questions/24840667");
         }
     }
 }

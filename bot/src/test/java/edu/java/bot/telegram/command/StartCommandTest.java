@@ -3,7 +3,6 @@ package edu.java.bot.telegram.command;
 import com.pengrad.telegrambot.model.Chat;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.User;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.vdurmont.emoji.EmojiParser;
 import edu.java.bot.enums.CommandType;
@@ -17,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class StartCommandTest {
@@ -31,8 +31,6 @@ class StartCommandTest {
     private Message message;
     @Mock
     private Chat chat;
-    @Mock
-    private User user;
 
     @Nested
     class CommandTypeTest {
@@ -94,9 +92,9 @@ class StartCommandTest {
         @Test
         void testCommandHandling() {
             String expectedReply = EmojiParser.parseToUnicode(
-                "*hi!* :wave:\n"
+                "<b>hi!</b> :wave:\n"
                     + "this is a link tracking bot :robot_face:\n"
-                    + "➜ */help* - show commands");
+                    + "➜ <b>/help</b> - show commands");
 
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
@@ -107,6 +105,7 @@ class StartCommandTest {
             Map<String, Object> parameters = sendMessage.getParameters();
             assertThat(parameters.get("chat_id")).isEqualTo(1L);
             assertThat(parameters.get("text")).isEqualTo(expectedReply);
+            verify(scrapperService).registerChat(1L);
         }
     }
 }

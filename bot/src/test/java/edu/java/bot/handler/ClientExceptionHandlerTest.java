@@ -42,7 +42,7 @@ class ClientExceptionHandlerTest {
                 null
             );
 
-            String expectedReply = "➜ */start* - start the bot";
+            String expectedReply = "➜ <b>/start</b> - start the bot";
 
             SendMessage actual = clientExceptionHandler.getReplyForScrapperErrorResponse(ex, 1L);
 
@@ -64,7 +64,7 @@ class ClientExceptionHandlerTest {
 
             String expectedReply = EmojiParser.parseToUnicode(
                 ":heavy_multiplication_x: unknown link\n" +
-                    "➜ */list* - show a list of tracked links"
+                    "➜ <b>/list</b> - show a list of tracked links"
             );
 
             SendMessage actual = clientExceptionHandler.getReplyForScrapperErrorResponse(ex, 1L);
@@ -87,7 +87,7 @@ class ClientExceptionHandlerTest {
 
             String expectedReply = EmojiParser.parseToUnicode(
                 ":heavy_check_mark: link has already been added\n" +
-                    "➜ */list* - show a list of tracked links"
+                    "➜ <b>/list</b> - show a list of tracked links"
             );
 
             SendMessage actual = clientExceptionHandler.getReplyForScrapperErrorResponse(ex, 1L);

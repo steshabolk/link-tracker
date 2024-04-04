@@ -89,9 +89,9 @@ class HelpCommandTest {
         void testCommandHandling() {
             String expectedReply = EmojiParser.parseToUnicode(
                 ":information_source: select one of the available commands:\n"
-                    + "➜ */track* - start tracking a link\n"
-                    + "➜ */untrack* - stop tracking a link\n"
-                    + "➜ */list* - show a list of tracked links");
+                    + "➜ <b>/track</b> - start tracking a link\n"
+                    + "➜ <b>/untrack</b> - stop tracking a link\n"
+                    + "➜ <b>/list</b> - show a list of tracked links");
             doReturn(message).when(update).message();
             doReturn(chat).when(message).chat();
             doReturn(1L).when(chat).id();

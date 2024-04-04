@@ -5,12 +5,11 @@ import com.pengrad.telegrambot.request.SendMessage;
 import edu.java.bot.enums.BotReply;
 import edu.java.bot.enums.CommandType;
 import edu.java.bot.enums.Emoji;
-import edu.java.bot.enums.LinkType;
 import edu.java.bot.service.ScrapperService;
 import edu.java.bot.util.BotSendMessage;
-import edu.java.bot.util.LinkTypeUtil;
+import edu.java.bot.util.LinkSourceUtil;
+import edu.java.bot.util.TextUtil;
 import java.net.URI;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,12 +20,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class ListCommand implements Command {
 
-    private final CommandType commandType = CommandType.LIST;
     private final ScrapperService scrapperService;
 
     @Override
     public CommandType commandType() {
-        return commandType;
+        return CommandType.LIST;
     }
 
     @Override
@@ -36,28 +34,28 @@ public class ListCommand implements Command {
         if (links.isEmpty()) {
             return BotSendMessage.getSendMessage(chatId, BotReply.EMPTY_LIST.getReply());
         }
-        Map<LinkType, List<URI>> groupedLinks = groupByLinkType(links);
+        Map<String, List<URI>> groupedLinks = groupByLinkSource(links);
         String linksReply = getLinksReply(groupedLinks);
         return BotSendMessage.getSendMessage(chatId, linksReply);
     }
 
-    private Map<LinkType, List<URI>> groupByLinkType(List<URI> links) {
+    private Map<String, List<URI>> groupByLinkSource(List<URI> links) {
         return links.stream()
-            .collect(Collectors.groupingBy(it -> LinkTypeUtil.getLinkType(it.getHost())))
+            .collect(Collectors.groupingBy(it -> LinkSourceUtil.getLinkType(it.getHost())))
             .entrySet().stream()
             .filter(e -> e.getKey().isPresent())
             .collect(Collectors.toMap(e -> e.getKey().get(), Map.Entry::getValue));
     }
 
-    private String getLinksReply(Map<LinkType, List<URI>> links) {
+    private String getLinksReply(Map<String, List<URI>> links) {
         return links.entrySet().stream()
-            .sorted(Comparator.comparing(e -> e.getKey().ordinal()))
-            .map(e -> getLinkTypeResponse(e.getKey(), e.getValue()))
+            .sorted(Map.Entry.comparingByKey())
+            .map(e -> getLinkSourceResponse(e.getKey(), e.getValue()))
             .collect(Collectors.joining("\n\n"));
     }
 
-    private String getLinkTypeResponse(LinkType linkType, List<URI> links) {
-        return String.format("%s *%s*\n", Emoji.LINK.getMarkdown(), linkType)
+    private String getLinkSourceResponse(String linkType, List<URI> links) {
+        return String.format("%s %s\n", Emoji.LINK.toUnicode(), TextUtil.toBold(linkType.toUpperCase()))
             + links.stream()
             .map(link -> String.format("➜ %s", link))
             .collect(Collectors.joining("\n"));
