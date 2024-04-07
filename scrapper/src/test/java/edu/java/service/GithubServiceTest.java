@@ -172,7 +172,7 @@ class GithubServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "➜ issue [title] was updated";
+            String expectedResponse = "➜ issue was updated [title]";
 
             IssueDto issue = new IssueDto("link", "title", CHECKED_AT.plusDays(1));
             doReturn(issue).when(githubClient).getIssue("JetBrains", "kotlin", "1");
@@ -208,7 +208,7 @@ class GithubServiceTest {
 
         @Test
         void shouldReturnResponseWhenThereAreUpdates() {
-            String expectedResponse = "➜ PR [title] was updated";
+            String expectedResponse = "➜ PR was updated [title]";
             IssueDto pr = new IssueDto("link", "title", CHECKED_AT.plusDays(1));
             doReturn(pr).when(githubClient).getPullRequest("JetBrains", "kotlin", "1");
 

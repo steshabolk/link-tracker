@@ -1,6 +1,7 @@
 app:
   database-access-type: jpa
   link-age: 120
+  link-update-batch-size: 50
   link-updater-scheduler:
     enable: true
     interval: 10000
@@ -28,23 +29,46 @@ app:
       max-attempts: 3
       backoff: 2000
       codes: 429, 503, 504
-  source-regex:
+  link-sources:
     github:
-      repository: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
-      branch: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/tree/(?<branch>[\w-\./]+)
-      pull-request: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/pull/(?<num>\d+)
-      issue: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/issues/(?<num>\d+)
+      domain: github.com
+      handlers:
+        repository:
+          regex: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)
+          handler: edu.java.handler.github.Repository
+        branch:
+          regex: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/tree/(?<branch>[\w-\./]+)
+          handler: edu.java.handler.github.RepositoryBranch
+        pull-request:
+          regex: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/pull/(?<num>\d+)
+          handler: edu.java.handler.github.PullRequest
+        issue:
+          regex: /(?<owner>[\w-\.]+)/(?<repo>[\w-\.]+)/issues/(?<num>\d+)
+          handler: edu.java.handler.github.Issue
     stackoverflow:
-      question: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
+      domain: stackoverflow.com
+      handlers:
+        question:
+          regex: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
+          handler: edu.java.handler.stackoverflow.Question
 
 spring:
   application:
     name: scrapper
+  messages:
+    basename: messages
+    encoding: UTF-8
   datasource:
     url: jdbc:postgresql://localhost:5432/scrapper
     username: postgres
     password: postgres
     driverClassName: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+        format_sql: false
   liquibase:
     enabled: false
   cache:

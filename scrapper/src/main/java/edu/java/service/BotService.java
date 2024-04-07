@@ -19,7 +19,7 @@ public class BotService {
 
     private final BotClient botClient;
 
-    public void sendLinkUpdate(Link link, String message) {
+    public boolean sendLinkUpdate(Link link, String message) {
         LinkUpdateResponse linkUpdate = new LinkUpdateResponse(
             link.getId(),
             URI.create(link.getUrl()),
@@ -36,12 +36,14 @@ public class BotService {
         );
         try {
             botClient.postUpdate(linkUpdate);
+            return true;
         } catch (RuntimeException ex) {
-            log.info("send link update error: {}", ex.getMessage());
+            log.info("client error when sending an update: {}", ex.getMessage());
             if (ex instanceof WebClientResponseException clientExc
                 && ArrayUtils.isNotEmpty(clientExc.getResponseBodyAsByteArray())) {
                 log.info("response: {}", clientExc.getResponseBodyAsString());
             }
+            return false;
         }
     }
 }

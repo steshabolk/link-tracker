@@ -86,6 +86,6 @@ public class GithubService {
     }
 
     private String getBaseIssueResponseMessage(IssueDto issue, boolean isIssue) {
-        return String.format("➜ %s [%s] was updated", isIssue ? "issue" : "PR", issue.title());
+        return String.format("➜ %s was updated [%s]", isIssue ? "issue" : "PR", issue.title());
     }
 }

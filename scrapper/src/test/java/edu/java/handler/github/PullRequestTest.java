@@ -3,27 +3,27 @@ package edu.java.handler.github;
 import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
 import edu.java.enums.LinkType;
-import edu.java.service.BotService;
 import edu.java.service.GithubService;
-import edu.java.service.LinkService;
+import edu.java.util.LinkSourceUtil;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.regex.MatchResult;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = PullRequest.class)
@@ -33,10 +33,7 @@ class PullRequestTest {
     private PullRequest pullRequest;
     @MockBean
     private GithubService githubService;
-    @MockBean
-    private BotService botService;
-    @MockBean
-    private LinkService linkService;
+    static MockedStatic<LinkSourceUtil> linkSourceUtilMock;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
         LocalDate.of(2024, 1, 1),
@@ -51,40 +48,25 @@ class PullRequestTest {
         .build();
     private static final RepositoryDto REPOSITORY = new RepositoryDto("JetBrains", "kotlin");
 
-    @Nested
-    class UrlDomainTest {
+    @BeforeAll
+    public static void init() {
+        linkSourceUtilMock = mockStatic(LinkSourceUtil.class);
+        linkSourceUtilMock.when(() -> LinkSourceUtil.getDomain(any())).thenReturn("github.com");
+    }
 
-        @Test
-        void urlDomainTest() {
-            String expected = "github.com";
-
-            String actual = pullRequest.urlDomain();
-
-            assertThat(actual).isEqualTo(expected);
-        }
+    @AfterAll
+    public static void close() {
+        linkSourceUtilMock.close();
     }
 
     @Nested
-    class UrlPathTest {
+    class RegexTest {
 
         @Test
-        void urlPathTest() {
+        void regexTest() {
             String expected = "/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/pull/(?<num>\\d+)";
 
-            String actual = pullRequest.urlPath();
-
-            assertThat(actual).isEqualTo(expected);
-        }
-    }
-
-    @Nested
-    class UrlPatternTest {
-
-        @Test
-        void urlPatternTest() {
-            String expected = "https://github.com/(?<owner>[\\w-\\.]+)/(?<repo>[\\w-\\.]+)/pull/(?<num>\\d+)";
-
-            String actual = pullRequest.urlPattern();
+            String actual = pullRequest.regex();
 
             assertThat(actual).isEqualTo(expected);
         }
@@ -105,45 +87,31 @@ class PullRequestTest {
     }
 
     @Nested
-    class CheckLinkUpdateTest {
+    class GetLinkUpdateTest {
 
         @Test
-        void shouldSendUpdateWhenThereAreUpdates() {
+        void shouldReturnResponseWhenThereAreUpdates() {
             doReturn(Optional.of("new PR"))
                 .when(githubService)
                 .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            pullRequest.checkLinkUpdate(LINK);
+            Optional<String> update = pullRequest.getLinkUpdate(LINK);
 
             verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
-            verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
-            verify(botService).sendLinkUpdate(LINK, "new PR");
+            assertThat(update).isPresent();
+            assertThat(update.get()).isEqualTo("new PR");
         }
 
         @Test
-        void shouldNotSendUpdateWhenThereAreNoUpdates() {
+        void shouldReturnEmptyWhenThereAreNoUpdates() {
             doReturn(Optional.empty())
                 .when(githubService)
                 .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
 
-            pullRequest.checkLinkUpdate(LINK);
+            Optional<String> update = pullRequest.getLinkUpdate(LINK);
 
             verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
-            verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
-        }
-
-        @Test
-        void shouldNotUpdateCheckAtWhenExceptionWasThrown() {
-            doThrow(RuntimeException.class)
-                .when(githubService)
-                .getPullRequestResponse(any(RepositoryDto.class), anyString(), any(OffsetDateTime.class));
-
-            assertThatThrownBy(() -> pullRequest.checkLinkUpdate(LINK)).isInstanceOf(RuntimeException.class);
-
-            verify(githubService).getPullRequestResponse(REPOSITORY, "1", CHECKED_AT);
-            verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
+            assertThat(update).isEmpty();
         }
     }
 }

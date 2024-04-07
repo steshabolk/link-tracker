@@ -1,34 +1,98 @@
 package edu.java.service;
 
-import edu.java.enums.LinkType;
+import edu.java.configuration.ApplicationConfig;
+import edu.java.entity.Link;
+import edu.java.enums.LinkStatus;
 import edu.java.handler.LinkUpdateHandler;
+import edu.java.util.LinkSourceUtil;
+import java.time.OffsetDateTime;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
-@RequiredArgsConstructor
 @Component
 public class LinkUpdaterService {
 
-    private static final Integer BATCH_SIZE = 50;
+    @Value("${app.link-update-batch-size}")
+    private Integer batchSize;
     @Value("${app.link-age}")
     private Integer linkAgeInMinutes;
     private final LinkService linkService;
-    private final List<LinkUpdateHandler> linkUpdateHandlers;
+    private final BotService botService;
+    private final Map<String, LinkUpdateHandler> linkUpdateHandlers;
 
-    public void updateLinks() {
-        linkService.getLinksToUpdate(linkAgeInMinutes, BATCH_SIZE).forEach(link -> {
-            LinkType linkType = link.getLinkType();
+    public LinkUpdaterService(
+        LinkService linkService, BotService botService,
+        List<LinkUpdateHandler> linkUpdateHandlers
+    ) {
+        this.linkService = linkService;
+        this.botService = botService;
+        this.linkUpdateHandlers =
             linkUpdateHandlers.stream()
-                .filter(handler -> handler.getLinkType().equals(linkType))
-                .findFirst()
+                .collect(Collectors.toMap(
+                    it -> it.getClass().getCanonicalName(),
+                    Function.identity()
+                ));
+    }
+
+    @Transactional
+    public void updateLinks() {
+        linkService.getLinksToUpdate(linkAgeInMinutes, batchSize)
+            .forEach(this::processLinkUpdate);
+    }
+
+    private void processLinkUpdate(Link link) {
+        Optional<LinkUpdateHandler> handler = LinkSourceUtil.getLinkSource(link.getLinkType())
+            .flatMap(it -> getLinkUpdateHandler(link, it));
+        if (handler.isEmpty()) {
+            log.warn("no update handler: LinkType={}, link=[{}]", link.getLinkType(), link.getUrl());
+            return;
+        }
+        OffsetDateTime checkedAt = OffsetDateTime.now();
+        try {
+            handler.get().getLinkUpdate(link)
                 .ifPresentOrElse(
-                    handler -> handler.updateLink(link),
-                    () -> log.warn("handler for LinkType={} was not found", linkType)
+                    it -> notifyBot(link, it, checkedAt),
+                    () -> linkService.updateCheckedAt(link, checkedAt)
                 );
-        });
+        } catch (RuntimeException ex) {
+            handleClientExceptionOnLinkUpdate(ex, link);
+        }
+    }
+
+    private Optional<LinkUpdateHandler> getLinkUpdateHandler(Link link, ApplicationConfig.LinkSource linkSource) {
+        return linkSource.handlers().values().stream()
+            .filter(it -> Pattern.matches("https://" + linkSource.domain() + it.regex(), link.getUrl()))
+            .map(ApplicationConfig.LinkSourceHandler::handler)
+            .map(linkUpdateHandlers::get)
+            .findFirst();
+    }
+
+    private void notifyBot(Link link, String update, OffsetDateTime checkedAt) {
+        boolean isSent = botService.sendLinkUpdate(link, update);
+        if (isSent) {
+            linkService.updateCheckedAt(link, checkedAt);
+        }
+    }
+
+    private void handleClientExceptionOnLinkUpdate(RuntimeException ex, Link link) {
+        log.info("client error on link update: {}", ex.getMessage());
+        if (ex instanceof WebClientResponseException clientExc) {
+            HttpStatusCode status = clientExc.getStatusCode();
+            if (status.equals(HttpStatus.NOT_FOUND) || status.equals(HttpStatus.BAD_REQUEST)) {
+                linkService.updateLinkStatus(link, LinkStatus.BROKEN);
+            }
+        }
     }
 }

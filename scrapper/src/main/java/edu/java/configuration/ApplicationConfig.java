@@ -17,9 +17,10 @@ import org.springframework.validation.annotation.Validated;
 public record ApplicationConfig(
     @NotNull
     AccessType databaseAccessType,
-    Map<String, List<String>> databaseAccessTypeBeans,
     @NotNull
     Integer linkAge,
+    @NotNull
+    Integer linkUpdateBatchSize,
     @NotNull
     LinkUpdaterScheduler linkUpdaterScheduler,
     @NotNull
@@ -28,7 +29,7 @@ public record ApplicationConfig(
     StackoverflowClient stackoverflowClient,
     @NotNull
     BotClient botClient,
-    Map<LinkType, Map<String, String>> sourceRegex
+    Map<LinkType, LinkSource> linkSources
 ) {
     public record LinkUpdaterScheduler(boolean enable, @NotNull Duration interval, @NotNull Duration forceCheckDelay) {
     }
@@ -44,6 +45,12 @@ public record ApplicationConfig(
 
     public record RetryConfig(@NotNull RetryStrategy strategy, @NotNull Integer maxAttempts,
                               @NotNull Duration backoff, Duration maxBackoff, @NotEmpty List<Integer> codes) {
+    }
+
+    public record LinkSource(@NotEmpty String domain, Map<String, LinkSourceHandler> handlers) {
+    }
+
+    public record LinkSourceHandler(@NotEmpty String regex, @NotEmpty String handler) {
     }
 
     public enum AccessType {

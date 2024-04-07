@@ -16,10 +16,10 @@ public class LinkParser {
         if (!Pattern.matches(URL_PATTERN, url)) {
             throw ApiExceptionType.INVALID_LINK.toException();
         }
-        return LinkTypeUtil.getLinkType(link.getHost(), url)
+        return LinkSourceUtil.getLinkType(link.getHost(), url)
             .map(it -> Link.builder()
                 .linkType(it)
-                .url("https://" + url.substring(url.indexOf(it.getDomain())))
+                .url("https://" + url.substring(url.indexOf(LinkSourceUtil.getDomain(it))))
                 .build())
             .orElseThrow(ApiExceptionType.NOT_SUPPORTED_SOURCE::toException);
     }
