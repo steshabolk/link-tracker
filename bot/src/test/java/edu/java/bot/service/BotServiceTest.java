@@ -3,7 +3,7 @@ package edu.java.bot.service;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import com.vdurmont.emoji.EmojiParser;
-import edu.java.bot.dto.request.LinkUpdateRequest;
+import edu.java.bot.dto.request.LinkUpdate;
 import edu.java.bot.listener.BotListener;
 import java.net.URI;
 import java.util.List;
@@ -42,7 +42,7 @@ class BotServiceTest {
 
         @Test
         void successfulSendUpdate() {
-            LinkUpdateRequest update = new LinkUpdateRequest(
+            LinkUpdate update = new LinkUpdate(
                 1L,
                 URI.create("https://github.com/JetBrains/kotlin"),
                 "new update",
@@ -64,7 +64,7 @@ class BotServiceTest {
 
         @Test
         void shouldDeleteChatWhenResponseCode403() {
-            LinkUpdateRequest update = new LinkUpdateRequest(
+            LinkUpdate update = new LinkUpdate(
                 1L,
                 URI.create("https://github.com/JetBrains/kotlin"),
                 "new update",

@@ -1,5 +1,6 @@
 app:
   database-access-type: jpa
+  use-queue: true
   link-age: 120
   link-update-batch-size: 50
   link-updater-scheduler:
@@ -51,6 +52,11 @@ app:
         question:
           regex: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
           handler: edu.java.handler.stackoverflow.Question
+  kafka-topics:
+    link-update:
+      name: link-update
+      partitions: 1
+      replicas: 3
 
 spring:
   application:
@@ -78,6 +84,18 @@ spring:
       spec: maximumSize=100000,expireAfterAccess=3600s
     jcache:
       provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
+  kafka:
+    bootstrap-servers: localhost:29091,localhost:29092,localhost:29093
+    producer:
+      client-id: ${spring.application.name}
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+      batch-size: 100000
+      properties:
+        linger.ms: 10000
+        delivery.timeout.ms: 60000
 
 server:
   port: 8080

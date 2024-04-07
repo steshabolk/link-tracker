@@ -1,6 +1,6 @@
 package edu.java.bot.controller;
 
-import edu.java.bot.dto.request.LinkUpdateRequest;
+import edu.java.bot.dto.request.LinkUpdate;
 import edu.java.bot.exception.ApiErrorResponse;
 import edu.java.bot.service.BotService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "update")
 @RequiredArgsConstructor
 @RestController
+@ConditionalOnProperty(prefix = "app", name = "use-queue", havingValue = "false")
 public class BotController {
 
     private final BotService botService;
@@ -30,7 +32,7 @@ public class BotController {
                      content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping("/updates")
-    public void sendUpdate(@RequestBody @Valid LinkUpdateRequest linkUpdate) {
+    public void sendUpdate(@RequestBody @Valid LinkUpdate linkUpdate) {
         botService.sendLinkUpdate(linkUpdate);
     }
 }
