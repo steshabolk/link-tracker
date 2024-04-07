@@ -1,29 +1,33 @@
 package edu.java.handler.github;
 
+import edu.java.dto.github.RepositoryDto;
 import edu.java.entity.Link;
-import edu.java.service.BotService;
+import edu.java.handler.LinkUpdateHandler;
 import edu.java.service.GithubService;
-import edu.java.service.LinkService;
+import java.util.Optional;
+import java.util.regex.MatchResult;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@RequiredArgsConstructor
 @Component
-public class Issue extends AbstractGithubSource {
+public class Issue implements LinkUpdateHandler {
 
-    @Value("${app.source-regex.github.issue}")
+    @Value("${app.link-sources.github.handlers.issue.regex}")
     private String regex;
-
-    public Issue(GithubService githubService, BotService botService, LinkService linkService) {
-        super(githubService, botService, linkService);
-    }
+    private final GithubService githubService;
 
     @Override
-    public String urlPath() {
+    public String regex() {
         return regex;
     }
 
     @Override
-    public void checkLinkUpdate(Link link) {
-        processBaseIssueUpdate(link, true);
+    public Optional<String> getLinkUpdate(Link link) {
+        MatchResult matcher = linkMatcher(link);
+        RepositoryDto repository = new RepositoryDto(matcher.group("owner"), matcher.group("repo"));
+        String num = matcher.group("num");
+        return githubService.getIssueResponse(repository, num, link.getCheckedAt());
     }
 }
