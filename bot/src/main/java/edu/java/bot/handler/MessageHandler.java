@@ -10,21 +10,34 @@ import edu.java.bot.enums.BotReply;
 import edu.java.bot.service.ScrapperService;
 import edu.java.bot.telegram.command.Command;
 import edu.java.bot.util.BotSendMessage;
+import io.micrometer.core.instrument.Counter;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Slf4j
-@RequiredArgsConstructor
 @Component
 public class MessageHandler {
 
     private final List<Command> commands;
     private final ScrapperService scrapperService;
     private final ClientExceptionHandler clientExceptionHandler;
+    private final Counter messageCounter;
+
+    public MessageHandler(
+        List<Command> commands,
+        ScrapperService scrapperService,
+        ClientExceptionHandler clientExceptionHandler,
+        @Qualifier("messageCounter") Counter messageCounter
+    ) {
+        this.commands = commands;
+        this.scrapperService = scrapperService;
+        this.clientExceptionHandler = clientExceptionHandler;
+        this.messageCounter = messageCounter;
+    }
 
     public SendMessage handle(Update update) {
         Long chatId = Optional.ofNullable(update.message())
@@ -39,6 +52,7 @@ public class MessageHandler {
         Optional<Command> command = commands.stream()
             .filter(cmd -> cmd.isTriggered(update))
             .findFirst();
+        messageCounter.increment();
         if (command.isEmpty()) {
             return BotSendMessage.getSendMessage(chatId, BotReply.UNKNOWN_COMMAND.getReply());
         }

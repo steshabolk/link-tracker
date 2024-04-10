@@ -32,6 +32,8 @@
         <bucket4j.version>0.12.2</bucket4j.version>
         <javax-cache.version>1.1.1</javax-cache.version>
         <caffeine.version>3.1.8</caffeine.version>
+        <micrometer-registry-prometheus.version>1.12.4</micrometer-registry-prometheus.version>
+        <micrometer-tracing-bridge-brave.version>1.2.4</micrometer-tracing-bridge-brave.version>
 
         <!-- Tests -->
         <testcontainers.version>1.19.4</testcontainers.version>
@@ -131,6 +133,28 @@
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>jcache</artifactId>
                 <version>${caffeine.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-actuator</artifactId>
+                <version>${spring-boot.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>${micrometer-registry-prometheus.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bridge-brave</artifactId>
+                <version>${micrometer-tracing-bridge-brave.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
