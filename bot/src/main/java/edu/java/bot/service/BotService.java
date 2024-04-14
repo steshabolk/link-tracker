@@ -1,7 +1,7 @@
 package edu.java.bot.service;
 
 import com.pengrad.telegrambot.response.SendResponse;
-import edu.java.bot.dto.request.LinkUpdateRequest;
+import edu.java.bot.dto.request.LinkUpdate;
 import edu.java.bot.enums.Emoji;
 import edu.java.bot.listener.BotListener;
 import edu.java.bot.util.BotSendMessage;
@@ -20,7 +20,7 @@ public class BotService {
     private final BotListener botListener;
     private final ScrapperService scrapperService;
 
-    public void sendLinkUpdate(LinkUpdateRequest linkUpdate) {
+    public void sendLinkUpdate(LinkUpdate linkUpdate) {
         log.debug(
             "send link update to the bot: id={}\nurl={}\nmessage={}",
             linkUpdate.id(),

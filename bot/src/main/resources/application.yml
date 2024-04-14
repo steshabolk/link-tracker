@@ -1,5 +1,6 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN}
+  use-queue: true
   scrapper-client:
     api: http://localhost:8080
     retry:
@@ -19,6 +20,20 @@ app:
       domain: stackoverflow.com
       regex:
         question: /(?:questions|q)/(?<id>[\d]+)[/\w-\d]*
+  kafka-topics:
+    link-update:
+      name: link-update
+      partitions: 1
+      replicas: 3
+    link-update-dlq:
+      name: link-update-dlq
+      partitions: 1
+      replicas: 1
+  kafka-retry:
+    max-attempts: 3
+    backoff: 2000
+    max-backoff: 10000
+    multiplier: 2
 
 spring:
   application:
@@ -37,6 +52,15 @@ spring:
       spec: maximumSize=100000,expireAfterAccess=3600s
     jcache:
       provider: com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider
+  kafka:
+    bootstrap-servers: localhost:29091,localhost:29092,localhost:29093
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+    producer:
+      client-id: ${spring.application.name}
 
 server:
   port: 8090

@@ -1,10 +1,12 @@
 package edu.java.service;
 
 import edu.java.configuration.ApplicationConfig;
+import edu.java.dto.response.LinkUpdate;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.enums.LinkType;
 import edu.java.handler.github.Repository;
+import edu.java.service.sender.HttpUpdateSender;
 import edu.java.util.LinkSourceUtil;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -24,7 +26,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -39,11 +40,11 @@ class LinkUpdaterServiceTest {
     @MockBean
     private LinkService linkService;
     @MockBean
-    private BotService botService;
+    private HttpUpdateSender updateSender;
     @MockBean
     private Repository repository;
     @Captor
-    private ArgumentCaptor<String> updateCaptor;
+    private ArgumentCaptor<LinkUpdate> updateCaptor;
 
     private static final OffsetDateTime CHECKED_AT = OffsetDateTime.of(
         LocalDate.of(2024, 1, 1),
@@ -73,7 +74,7 @@ class LinkUpdaterServiceTest {
             linkUpdaterService.updateLinks();
 
             verify(repository, never()).getLinkUpdate(any(Link.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
+            verify(updateSender, never()).send(any(LinkUpdate.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
         }
 
@@ -90,7 +91,7 @@ class LinkUpdaterServiceTest {
             linkUpdaterService.updateLinks();
 
             verify(repository, never()).getLinkUpdate(any(Link.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
+            verify(updateSender, never()).send(any(LinkUpdate.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
         }
 
@@ -102,7 +103,7 @@ class LinkUpdaterServiceTest {
             linkUpdaterService.updateLinks();
 
             verify(repository).getLinkUpdate(any(Link.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
+            verify(updateSender, never()).send(any(LinkUpdate.class));
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
         }
 
@@ -110,28 +111,28 @@ class LinkUpdaterServiceTest {
         void shouldSendUpdateAndUpdateCheckAtWhenThereAreUpdates() {
             doReturn(List.of(LINK)).when(linkService).getLinksToUpdate(any(), any());
             doReturn(Optional.of("new update")).when(repository).getLinkUpdate(any(Link.class));
-            doReturn(true).when(botService).sendLinkUpdate(any(Link.class), anyString());
+            doReturn(true).when(updateSender).send(any(LinkUpdate.class));
 
             linkUpdaterService.updateLinks();
 
             verify(repository).getLinkUpdate(any(Link.class));
-            verify(botService).sendLinkUpdate(any(Link.class), updateCaptor.capture());
+            verify(updateSender).send(updateCaptor.capture());
             verify(linkService).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
-            assertThat(updateCaptor.getValue()).isEqualTo("new update");
+            assertThat(updateCaptor.getValue().description()).isEqualTo("new update");
         }
 
         @Test
         void shouldNotUpdateCheckAtWhenSendUpdateReturnFalse() {
             doReturn(List.of(LINK)).when(linkService).getLinksToUpdate(any(), any());
             doReturn(Optional.of("new update")).when(repository).getLinkUpdate(any(Link.class));
-            doReturn(false).when(botService).sendLinkUpdate(any(Link.class), anyString());
+            doReturn(false).when(updateSender).send(any(LinkUpdate.class));
 
             linkUpdaterService.updateLinks();
 
             verify(repository).getLinkUpdate(any(Link.class));
-            verify(botService).sendLinkUpdate(any(Link.class), updateCaptor.capture());
+            verify(updateSender).send(updateCaptor.capture());
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
-            assertThat(updateCaptor.getValue()).isEqualTo("new update");
+            assertThat(updateCaptor.getValue().description()).isEqualTo("new update");
         }
 
         @Test
@@ -143,7 +144,7 @@ class LinkUpdaterServiceTest {
             linkUpdaterService.updateLinks();
 
             verify(repository).getLinkUpdate(any(Link.class));
-            verify(botService, never()).sendLinkUpdate(any(Link.class), anyString());
+            verify(updateSender, never()).send(any(LinkUpdate.class));
             verify(linkService, never()).updateCheckedAt(any(Link.class), any(OffsetDateTime.class));
             verify(linkService).updateLinkStatus(LINK, LinkStatus.BROKEN);
         }

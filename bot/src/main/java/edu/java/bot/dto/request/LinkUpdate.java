@@ -6,8 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.List;
 
-public record LinkUpdateRequest(@NotNull Long id,
-                                @NotNull URI url,
-                                @NotBlank String description,
-                                @NotEmpty List<Long> tgChatIds) {
+public record LinkUpdate(@NotNull Long id,
+                         @NotNull URI url,
+                         @NotBlank String description,
+                         @NotEmpty List<Long> tgChatIds) {
 }

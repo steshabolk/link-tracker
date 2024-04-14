@@ -18,6 +18,8 @@ public record ApplicationConfig(
     @NotNull
     AccessType databaseAccessType,
     @NotNull
+    Boolean useQueue,
+    @NotNull
     Integer linkAge,
     @NotNull
     Integer linkUpdateBatchSize,
@@ -29,7 +31,8 @@ public record ApplicationConfig(
     StackoverflowClient stackoverflowClient,
     @NotNull
     BotClient botClient,
-    Map<LinkType, LinkSource> linkSources
+    Map<LinkType, LinkSource> linkSources,
+    Map<String, KafkaTopic> kafkaTopics
 ) {
     public record LinkUpdaterScheduler(boolean enable, @NotNull Duration interval, @NotNull Duration forceCheckDelay) {
     }
@@ -51,6 +54,9 @@ public record ApplicationConfig(
     }
 
     public record LinkSourceHandler(@NotEmpty String regex, @NotEmpty String handler) {
+    }
+
+    public record KafkaTopic(@NotNull String name, @NotNull Integer partitions, @NotNull Short replicas) {
     }
 
     public enum AccessType {

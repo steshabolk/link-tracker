@@ -1,10 +1,14 @@
 package edu.java.service;
 
 import edu.java.configuration.ApplicationConfig;
+import edu.java.dto.response.LinkUpdate;
+import edu.java.entity.Chat;
 import edu.java.entity.Link;
 import edu.java.enums.LinkStatus;
 import edu.java.handler.LinkUpdateHandler;
+import edu.java.service.sender.UpdateSender;
 import edu.java.util.LinkSourceUtil;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +33,15 @@ public class LinkUpdaterService {
     @Value("${app.link-age}")
     private Integer linkAgeInMinutes;
     private final LinkService linkService;
-    private final BotService botService;
+    private final UpdateSender updateSender;
     private final Map<String, LinkUpdateHandler> linkUpdateHandlers;
 
     public LinkUpdaterService(
-        LinkService linkService, BotService botService,
+        LinkService linkService, UpdateSender updateSender,
         List<LinkUpdateHandler> linkUpdateHandlers
     ) {
         this.linkService = linkService;
-        this.botService = botService;
+        this.updateSender = updateSender;
         this.linkUpdateHandlers =
             linkUpdateHandlers.stream()
                 .collect(Collectors.toMap(
@@ -79,8 +83,22 @@ public class LinkUpdaterService {
             .findFirst();
     }
 
-    private void notifyBot(Link link, String update, OffsetDateTime checkedAt) {
-        boolean isSent = botService.sendLinkUpdate(link, update);
+    private void notifyBot(Link link, String message, OffsetDateTime checkedAt) {
+        LinkUpdate update = new LinkUpdate(
+            link.getId(),
+            URI.create(link.getUrl()),
+            message,
+            link.getChats().stream()
+                .map(Chat::getChatId)
+                .collect(Collectors.toList())
+        );
+        log.debug(
+            "send link update to the bot: id={}\nurl={}\nmessage={}",
+            update.id(),
+            update.url(),
+            update.description()
+        );
+        boolean isSent = updateSender.send(update);
         if (isSent) {
             linkService.updateCheckedAt(link, checkedAt);
         }
