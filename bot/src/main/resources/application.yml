@@ -93,3 +93,17 @@ bucket4j:
             - capacity: 50
               time: 1
               unit: seconds
+
+management:
+  server:
+    port: 8091
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: info,health,prometheus
+      path-mapping:
+        prometheus: /metrics

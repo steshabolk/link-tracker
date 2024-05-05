@@ -16,6 +16,7 @@ import edu.java.bot.telegram.command.TrackCommand;
 import edu.java.bot.telegram.command.UntrackCommand;
 import java.util.List;
 import java.util.Map;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,8 @@ class MessageHandlerTest {
     private ScrapperService scrapperService;
     @Mock
     private ClientExceptionHandler clientExceptionHandler;
+    @Mock
+    private Counter counter;
     @Mock
     private HelpCommand helpCommand;
     @Mock
@@ -63,7 +66,7 @@ class MessageHandlerTest {
     @BeforeEach
     void init() {
         List<Command> commands = List.of(helpCommand, listCommand, startCommand, trackCommand, untrackCommand);
-        messageHandler = new MessageHandler(commands, scrapperService, clientExceptionHandler);
+        messageHandler = new MessageHandler(commands, scrapperService, clientExceptionHandler, counter);
         doReturn(false).when(helpCommand).isTriggered(update);
         doReturn(false).when(listCommand).isTriggered(update);
         doReturn(false).when(trackCommand).isTriggered(update);
